@@ -1,4 +1,4 @@
-name: Deploy Backend
+name: Deploy Spons CRM Backend
 
 on:
   push:
@@ -10,28 +10,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Droplet
+      - name: SSH and Deploy to DigitalOcean
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.PORT }}
           script: |
-            # 1. Navigate and Pull
+            # 1. Force load NVM and Node into the path
+            # This is required because SSH actions use non-interactive shells
+            export NVM_DIR="/root/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
+            # Verify Node environment
+            node -v
+            npm -v
+
+            # 2. Navigate and Pull latest code
             cd ~/sponsCRM
             git pull origin main
 
-            # 2. Re-prune (Crucial for Turborepo structure changes)
+            # 3. Isolate the backend (Turborepo prune)
+            # This ensures we only deal with backend-related files
             npx turbo prune backend --docker
-            
-            # 3. Move to isolated files and install
+
+            # 4. Move to the pruned directory and install dependencies
             cd out/full
             npm install
-            
-            # 4. Generate Prisma Client (Since we saw this is needed)
+
+            # 5. Generate Prisma Client
+            # Necessary for the backend to recognize the database schema/types
             cd apps/backend
             npx prisma generate
-            
-            # 5. Restart with our specific tsx command
-            # This ensures it uses the same command that worked manually
+
+            # 6. Restart the backend process
+            # Uses 'npx tsx' to handle ESM and TypeScript pathing issues 
             pm2 restart "spons-backend" || pm2 start "npx tsx src/index.ts" --name "spons-backend"
+
+            # 7. Final Clean up (Optional)
+            pm2 save
