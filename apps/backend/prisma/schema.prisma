@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  
+}
+
+enum Role {
+  SENIOR
+  ADMIN
+  MEMBER
+}
+
+enum Status {
+  NOT_CONTACTED
+  CONTACTED
+  IN_TALKS
+  NEGOTIATING
+  POSITIVE
+  CLOSED
+  REJECTED
+}
+
+enum Type {
+  CASH
+  IN_KIND
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+}
+
+enum Domain {
+  EDTECH
+  FINTECH
+  PREVIOUS_YEAR
+  BRAND_ACTIVATION
+  MEDIA
+  STATIONERY
+  AI_TECH
+  STARTUP
+  FITNESS
+  GAMING 
+  FMCG
+  AUDIO_MOBILE
+  BANK
+  AUTOMOBILE_TRAVEL
+  FASHION
+  SKINCARE
+  HEALTHCARE
+  WORKSHOP
+  MISCELLANEOUS
+   
+}
+
+model User { 
+  id    String @id @default(uuid())
+  email String  @unique
+  name  String?
+  password String
+  orgId String?
+  role Role @default(MEMBER)
+  organization Organization? @relation("OrganizationMembers", fields: [orgId], references: [id])
+  createdAt DateTime @default(now())
+  assignedCompanies Company[] @relation("AssignedCompanies")
+  createdCompanies Company[] @relation("CreatedCompanies")
+  activities Activity[]
+
+  
+} 
+
+model Organization {
+  id String @id @default(uuid())
+  name String
+  inviteCode String @unique
+  users User[] @relation("OrganizationMembers")
+  companies Company[]
+  createdById String
+  createdAt DateTime @default(now())
+  sheetId String?
+  googleAccessToken String?
+  googleRefreshToken String?
+  lastSyncedAt DateTime?
+}
+
+
+
+model Company {
+  id String @id @default(uuid())
+  name String 
+  contactName String
+  linkedinUrl String?
+  phoneNumber String?
+  domain Domain @default(EDTECH)
+  status Status @default(NOT_CONTACTED)
+  amount Int?
+  type Type? @default(CASH)
+  nextFollowUp DateTime?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  lastContactedAt DateTime?
+  note String?
+
+  activities Activity[]
+  //relations
+  assignedToId String?
+  assignedTo User? @relation("AssignedCompanies", fields: [assignedToId], references: [id])
+  createdById String
+  createdBy User @relation("CreatedCompanies", fields: [createdById], references: [id])
+  orgId String
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  @@unique([name, orgId]) //WITHIN SAME OIRGANIZATION COMPANY NAME SHOULD BE UNIQUE
+  @@index([orgId]) // Index = shortcut for database search WITHOUT THIS DB SCANS ALL RECORDS TO FIND MATCHING ORG ID
+  @@index([assignedToId])
+  @@index([status])
+  @@index([domain])  
+}
+
+model Activity{
+  id        String   @id @default(uuid())
+
+  type      ActivityType @default(CALL)   // call | email | meeting
+  note      String?
+
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+
+
+}
+

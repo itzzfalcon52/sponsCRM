@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Company" ALTER COLUMN "linkedinUrl" DROP NOT NULL,
+ALTER COLUMN "phoneNumber" DROP NOT NULL,
+ALTER COLUMN "domain" DROP NOT NULL;
