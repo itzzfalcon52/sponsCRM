@@ -53,6 +53,8 @@ app.use(hpp());
 
 const allowedOrigins = [
     "http://localhost:5173",
+    "https://www.sponscrm.tech/",
+    "https://spons-crm-frontend.vercel.app/",
   
 ];
 
