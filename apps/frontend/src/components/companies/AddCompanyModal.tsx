@@ -94,7 +94,7 @@ export default function AddCompanyModal({ open, onClose }: { open: boolean; onCl
   };
 
   return (
-    <Dialog open={open} onOpenChange={(open) => !isSubmitting && onClose()}>
+    <Dialog open={open} onOpenChange={() => !isSubmitting && onClose()}>
       <DialogContent className="sm:max-w-[500px] p-0 bg-white overflow-hidden border-slate-200">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-3">

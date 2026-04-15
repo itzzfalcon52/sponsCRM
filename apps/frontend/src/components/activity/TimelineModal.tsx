@@ -82,7 +82,7 @@ export default function TimelineModal({ open, onClose, company }: any) {
                     </div>
                   ) : (
                     <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
-                      {activities.map((a: any, idx: number) => (
+                      {activities.map((a: any) => (
                         <div key={a.id} className="relative flex items-start gap-4">
                           <div className={`shrink-0 z-10 h-10 w-10 rounded-full border shadow-sm flex items-center justify-center bg-white ${getActivityColor(a.type)} relative`}>
                              {getActivityIcon(a.type)}

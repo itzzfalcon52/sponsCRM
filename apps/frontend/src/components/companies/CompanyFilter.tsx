@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { api } from "../../api/axios"; 
 import { useAuthStore } from "../../stores/authstore";
 
 export default function CompanyFilters({ 

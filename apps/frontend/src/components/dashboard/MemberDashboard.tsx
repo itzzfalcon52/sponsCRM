@@ -221,7 +221,7 @@ export default function MemberDashboard() {
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {dealTypeData.map((entry, index) => (
+                      {dealTypeData.map(( index:any) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
