@@ -17,17 +17,21 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            # 1. Navigate and Pull
             cd ~/sponsCRM
             git pull origin main
 
-            # install deps at root (turborepo)
+            # 2. Re-prune (Crucial for Turborepo structure changes)
+            npx turbo prune backend --docker
+            
+            # 3. Move to isolated files and install
+            cd out/full
             npm install
-
-            # go to backend
+            
+            # 4. Generate Prisma Client (Since we saw this is needed)
             cd apps/backend
-
-            # build safely (1GB RAM fix)
-            NODE_OPTIONS="--max-old-space-size=512" npm run build
-
-            # restart backend only
-            pm2 restart sponscrm || pm2 start dist/src/index.js --name sponscrm
+            npx prisma generate
+            
+            # 5. Restart with our specific tsx command
+            # This ensures it uses the same command that worked manually
+            pm2 restart "spons-backend" || pm2 start "npx tsx src/index.ts" --name "spons-backend"
