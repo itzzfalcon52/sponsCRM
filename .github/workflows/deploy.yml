@@ -30,4 +30,4 @@ jobs:
             NODE_OPTIONS="--max-old-space-size=512" npm run build
 
             # restart backend only
-            pm2 restart sponscrm || pm2 start dist/index.js --name sponscrm
+            pm2 restart sponscrm || pm2 start dist/src/index.js --name sponscrm
