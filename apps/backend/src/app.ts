@@ -52,10 +52,10 @@ app.use(cookieParser());
 app.use(hpp());
 
 const allowedOrigins = [
-    "http://localhost:5173",
-    "https://www.sponscrm.tech/",
-    "https://spons-crm-frontend.vercel.app/",
-  
+  "http://localhost:5173",
+  "https://www.sponscrm.tech",        // Removed slash
+  "https://sponscrm.tech",            // Added apex domain just in case
+  "https://spons-crm-frontend.vercel.app", // Removed slash
 ];
 
 app.use(cors({
