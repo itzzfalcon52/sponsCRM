@@ -1,0 +1,33 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Droplet
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ~/sponsCRM
+            git pull origin main
+
+            # install deps at root (turborepo)
+            npm install
+
+            # go to backend
+            cd apps/backend
+
+            # build safely (1GB RAM fix)
+            NODE_OPTIONS="--max-old-space-size=512" npm run build
+
+            # restart backend only
+            pm2 restart sponscrm || pm2 start dist/index.js --name sponscrm
