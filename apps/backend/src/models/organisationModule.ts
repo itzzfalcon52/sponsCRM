@@ -1,5 +1,5 @@
-import {prisma} from '../lib/prisma';
-import { Role } from '../../generated/prisma/client';
+import {prisma} from '../lib/prisma.js';
+import { Role } from '../../generated/prisma/client.js';
 import z from 'zod';
 import crypto from 'crypto';
 

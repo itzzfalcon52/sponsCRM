@@ -7,12 +7,12 @@ import {
   deleteCompany,
   getMyCompanies,
   assignCompany
-} from "../models/companyModule";
-import { prisma } from "../lib/prisma";
+} from "../models/companyModule.js";
+import { prisma } from "../lib/prisma.js";
 import {
     bulkAssignCompanies,
     bulkAssignSchema,
-  } from "../models/companyModule";
+  } from "../models/companyModule.js";
 
 /* ================================
    CREATE COMPANY

@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { prisma } from "../lib/prisma";
-import type { ActivityType, Status } from "../../generated/prisma/client";
+import { prisma } from "../lib/prisma.js";
+import type { ActivityType, Status } from "../../generated/prisma/client.js";
 
 /**
  *  VALIDATION SCHEMA

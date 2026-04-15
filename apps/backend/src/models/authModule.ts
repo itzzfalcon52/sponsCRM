@@ -1,6 +1,6 @@
-import {prisma} from '../lib/prisma';
+import {prisma} from '../lib/prisma.js';
 import bcrypt from 'bcrypt';
-import { Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../../generated/prisma/client.js';
 import z from 'zod';
 
 

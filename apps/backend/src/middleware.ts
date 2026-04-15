@@ -1,7 +1,7 @@
-import {prisma} from "./lib/prisma"
+import {prisma} from "./lib/prisma.js"
 import jwt from "jsonwebtoken";
 import type { Response } from "express";
-import type { User } from "../generated/prisma/client";
+import type { User } from "../generated/prisma/client.js";
 import dotenv from "dotenv";
 
 

@@ -1,6 +1,6 @@
-import { createActivity, getActivitiesByCompany,getAllActivities,getFollowUps } from "../models/activityModule";
+import { createActivity, getActivitiesByCompany,getAllActivities,getFollowUps } from "../models/activityModule.js";
 import type { Response } from "express";
-import type { CreateActivityInput } from "../models/activityModule";
+import type { CreateActivityInput } from "../models/activityModule.js";
 
 export const createActivityController = async (req: any, res: Response) => {
   try {

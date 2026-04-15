@@ -1,10 +1,10 @@
 import jwt, { type SignOptions } from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { registerUser, loginUser } from "../models/authModule";
+import { registerUser, loginUser } from "../models/authModule.js";
 import type { Response } from "express";
 import type { CookieOptions } from "express";
-import type { Role, User } from "../../generated/prisma/client";
-import { prisma } from "../lib/prisma";
+import type { Role, User } from "../../generated/prisma/client.js";
+import { prisma } from "../lib/prisma.js";
 import { nextTick } from "process";
 
 type JwtPayload = {

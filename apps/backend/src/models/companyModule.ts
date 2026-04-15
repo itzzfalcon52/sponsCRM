@@ -1,7 +1,7 @@
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 import { Prisma } from "../../generated/prisma/client";
 import { z } from "zod";
-import { Domain } from "../../generated/prisma/client";
+import { Domain } from "../../generated/prisma/client.js";
 
 /* ================================
    ENUM SCHEMAS

@@ -1,8 +1,8 @@
-import type { Role, User } from "../../generated/prisma/client";
-import { prisma } from "../lib/prisma";
+import type { Role, User } from "../../generated/prisma/client.js";
+import { prisma } from "../lib/prisma.js";
 import type { Response } from "express";
-import { createSendToken } from "./authController";
-import { createOrganization, joinOrganization,getOrganizationMembers,removeOrganizationMember,updateMemberRole } from "../models/organisationModule";
+import { createSendToken } from "./authController.js";
+import { createOrganization, joinOrganization,getOrganizationMembers,removeOrganizationMember,updateMemberRole } from "../models/organisationModule.js";
 import { sign } from "crypto";
 import { create } from "domain";
 
