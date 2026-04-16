@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuthStore } from "../../stores/authstore";
 import { useNavigate } from "react-router-dom";
-import { api } from "../../api/axios"; // Adjust path to your axios instance
+import { api } from "../../api/axios"; 
 import { 
   Building2,
   Copy, 
@@ -31,18 +31,14 @@ export default function Topbar() {
   const isAdmin = user?.role === "ADMIN";
   const inviteCode = user?.organization?.inviteCode;
 
-  // FIXED LOGOUT HANDLER
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      // 1. Call backend to clear cookie
       await api.post("/auth/logout"); 
     } catch (error) {
       console.error("Logout failed", error);
     } finally {
-      // 2. Clear Zustand state
       logout();
-      // 3. Force redirect to landing page
       navigate("/", { replace: true });
       setIsLoggingOut(false);
     }
@@ -84,7 +80,7 @@ export default function Topbar() {
       {/* Right Controls Section */}
       <div className="flex items-center gap-3">
         
-        {/* Invite Code (Admin Only) - SaaS Pill Style */}
+        {/* Invite Code (Admin Only) */}
         {user?.organization && isAdmin && inviteCode && (
           <div className="hidden lg:flex items-center gap-2 bg-white border border-slate-200 rounded-full pl-4 pr-1.5 py-1 shadow-sm hover:border-indigo-200 transition-colors group">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Invite:</span>
@@ -134,21 +130,24 @@ export default function Topbar() {
             <DropdownMenuItem className="p-3 cursor-pointer text-slate-600 font-medium">
                 <UserIcon className="mr-3 h-4 w-4 text-slate-400" /> Account Settings
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="p-3 cursor-pointer text-rose-600 focus:bg-rose-50 focus:text-rose-700 font-bold"
-            >
-                {isLoggingOut ? (
-                    <Loader2 className="mr-3 h-4 w-4 animate-spin" />
-                ) : (
-                    <LogOut className="mr-3 h-4 w-4" />
-                )}
-                Sign Out
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* Standalone Logout Button */}
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          className="h-9 w-9 text-slate-400 hover:text-red-600 hover:bg-red-50 ml-1 transition-colors rounded-full"
+          title="Sign Out"
+        >
+          {isLoggingOut ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <LogOut className="h-4 w-4" />
+          )}
+        </Button>
       </div>
     </header>
   );
