@@ -22,6 +22,7 @@ import FeaturesPage from './pages/Features'
 import PricingPage from './pages/PricingPage'
 import AboutPage from './pages/AboutPage'
 import Footer from './components/landing/Footer'
+import OrgRequiredRoute from './components/OrgRequiredRoute'
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="flex min-h-screen flex-col">
@@ -121,18 +122,20 @@ const App = () => {
         } 
       />
 
-      {/*  APP ROUTES */}
-      <Route path='/' element={
-        <ProtectedRoute>
-          <AppLayout/>
-       
-        <Route path='dashboard' element={<Dashboard />} />
-        <Route path='companies/*' element={<Companies/>} />
-        <Route path='team/*' element={<Team/>} />
-        <Route path="activities/*" element={<Activities/>} />
-        <Route path="pipeline/*" element={<Pipeline/>} />
-
-        </ProtectedRoute>}>
+      {/* APP ROUTES 
+          1. Requires Login (ProtectedRoute)
+          2. Requires Org (OrgRequiredRoute)
+      */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<OrgRequiredRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path='dashboard' element={<Dashboard />} />
+            <Route path='companies/*' element={<Companies/>} />
+            <Route path='team/*' element={<Team/>} />
+            <Route path="activities/*" element={<Activities/>} />
+            <Route path="pipeline/*" element={<Pipeline/>} />
+          </Route>
+        </Route>
       </Route>
 
     </Routes>
