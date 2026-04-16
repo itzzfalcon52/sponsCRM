@@ -23,6 +23,7 @@ import PricingPage from './pages/PricingPage'
 import AboutPage from './pages/AboutPage'
 import Footer from './components/landing/Footer'
 import OrgRequiredRoute from './components/OrgRequiredRoute'
+import WorkspaceSettings from './pages/WorkspaceSetting'
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="flex min-h-screen flex-col">
@@ -139,7 +140,9 @@ const App = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<OrgRequiredRoute />}>
           <Route element={<AppLayout />}>
+            
             <Route path='dashboard' element={<Dashboard />} />
+            <Route path='settings' element={<WorkspaceSettings/>} />
             <Route path='companies/*' element={<Companies/>} />
             <Route path='team/*' element={<Team/>} />
             <Route path="activities/*" element={<Activities/>} />

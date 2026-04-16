@@ -2,7 +2,9 @@ import type { Role, User } from "../../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
 import type { Response } from "express";
 import { createSendToken } from "./authController.js";
-import { createOrganization, joinOrganization,getOrganizationMembers,removeOrganizationMember,updateMemberRole } from "../models/organisationModule.js";
+import { createOrganization, joinOrganization,getOrganizationMembers,removeOrganizationMember,updateMemberRole,updateOrganizationName, 
+    leaveOrganization, 
+    deleteFullOrganization} from "../models/organisationModule.js";
 import { sign } from "crypto";
 import { create } from "domain";
 
@@ -155,4 +157,42 @@ export const updateMemberRoleController = async (req: any, res: Response) => {
         });
     }
 };
+
+export const updateOrgController = async (req: any, res: Response) => {
+    try {
+      const { name } = req.body;
+      const orgId = req.user.orgId;
+  
+      if (req.user.role !== "ADMIN") {
+        return res.status(403).json({ status: "fail", message: "Only admins can rename the workspace" });
+      }
+  
+      const updatedOrg = await updateOrganizationName(orgId, name);
+      res.status(200).json({ status: "success", data: { organization: updatedOrg } });
+    } catch (error: any) {
+      res.status(400).json({ status: "error", message: error.message });
+    }
+  };
+  
+  export const leaveOrgController = async (req: any, res: Response) => {
+    try {
+      await leaveOrganization(req.user.id, req.user.orgId);
+      res.status(200).json({ status: "success", message: "Left organization successfully" });
+    } catch (error: any) {
+      res.status(400).json({ status: "error", message: error.message });
+    }
+  };
+  
+  export const deleteOrgController = async (req: any, res: Response) => {
+    try {
+      if (req.user.role !== "ADMIN") {
+        return res.status(403).json({ status: "fail", message: "Unauthorized action" });
+      }
+  
+      await deleteFullOrganization(req.user.orgId);
+      res.status(204).json({ status: "success", data: null });
+    } catch (error: any) {
+      res.status(400).json({ status: "error", message: error.message });
+    }
+  };
 

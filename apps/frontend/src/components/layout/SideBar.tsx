@@ -107,7 +107,7 @@ export default function Sidebar() {
               : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
           }`}
         >
-          <Building className={`h-4 w-4 ${location.pathname === "/organization" ? "text-indigo-600" : "text-slate-400"}`} />
+          <Building className={`h-4 w-4 ${location.pathname === "/settings" ? "text-indigo-600" : "text-slate-400"}`} />
           Workspace Settings
         </Link>
       </div>

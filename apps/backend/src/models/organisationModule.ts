@@ -134,3 +134,58 @@ export const updateMemberRole = async (memberId: string, orgId: string, newRole:
     },
   });
 };
+
+export const updateOrganizationName = async (orgId: string, name: string) => {
+  return await prisma.organization.update({
+    where: { id: orgId },
+    data: { name },
+  });
+};
+
+export const leaveOrganization = async (userId: string, orgId: string) => {
+  // Check if user is the last admin
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  
+  if (user?.role === "ADMIN") {
+    const otherAdmins = await prisma.user.count({
+      where: { orgId, role: "ADMIN", NOT: { id: userId } },
+    });
+
+    if (otherAdmins === 0) {
+      throw new Error("You are the last Admin. Appoint another Admin before leaving.");
+    }
+  }
+
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { 
+      orgId: null, 
+      role: "MEMBER" 
+    },
+  });
+};
+
+export const deleteFullOrganization = async (orgId: string) => {
+  return await prisma.$transaction(async (tx) => {
+    // 1. Delete all activities linked to companies in this org
+    await tx.activity.deleteMany({
+      where: { company: { orgId } },
+    });
+
+    // 2. Delete all companies in this org
+    await tx.company.deleteMany({
+      where: { orgId },
+    });
+
+    // 3. Reset all users who were in this org to have no org
+    await tx.user.updateMany({
+      where: { orgId },
+      data: { orgId: null, role: "MEMBER" },
+    });
+
+    // 4. Finally, delete the organization record
+    return await tx.organization.delete({
+      where: { id: orgId },
+    });
+  });
+};

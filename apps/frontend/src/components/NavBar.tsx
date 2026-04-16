@@ -125,8 +125,10 @@ export default function NavBar() {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem className="p-3 cursor-pointer">
+                    <Link to="/settings">
                     <Settings className="mr-3 h-4 w-4 text-slate-400" />
                     <span className="font-bold">Workspace Settings</span>
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 

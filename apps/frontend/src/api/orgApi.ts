@@ -32,4 +32,24 @@ export const orgApi={
         const res = await api.patch(`/org/members/${userId}/role`, { role });
         return res.data;
     },
+
+    // 6. Update Org Name (Admin Only)
+    updateOrg: async (data: { name: string }) => {
+        const res = await api.patch("/org/update", data);
+        return res.data;
+    },
+
+    // 7. Leave Organization
+    leaveOrg: async () => {
+        const res = await api.post("/org/leave");
+        return res.data;
+    },
+
+    // 8. Delete Organization (Admin Only)
+    deleteOrg: async () => {
+        const res = await api.delete("/org/delete");
+        return res.data;
+    }
+
+
 }
