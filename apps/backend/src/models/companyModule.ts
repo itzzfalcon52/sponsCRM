@@ -121,31 +121,22 @@ export const listCompanies = async (
       listCompaniesSchema.parse(input);
   
     const skip = (page - 1) * limit;
+
+    const where = {
+      orgId,
+      status: status ?? undefined,
+      domain: domain ?? undefined,
+      assignedToId: assignedTo ?? undefined,
+      OR: q ? [
+        { name: { contains: q, mode: "insensitive" as Prisma.QueryMode } },
+        { contactName: { contains: q, mode: "insensitive" as Prisma.QueryMode } },
+      ] : undefined,
+    };
   
    
     const [companies, total] = await Promise.all([
       prisma.company.findMany({
-        where: {
-          orgId,
-          status: status ?? undefined,
-          domain: domain ?? undefined,
-          assignedToId: assignedTo ?? undefined,
-         
-  
-          OR: q
-            ? [
-                { name: { contains: q, mode: "insensitive" } },
-                { contactName: { contains: q, mode: "insensitive" } },
-                // domain is an enum in Prisma, so it doesn't support `contains`
-                // Allow searching by exact enum value (case-insensitive input)
-                {
-                  domain: {
-                    equals: q.toUpperCase() as Domain,
-                  },
-                },
-              ]
-            : undefined,
-        },
+        where,
   
         select: {
           id: true,
@@ -184,14 +175,7 @@ export const listCompanies = async (
       }),
   
       //  COUNT QUERY
-      prisma.company.count({
-        where: {
-          orgId,
-          status: status ?? undefined,
-          domain: domain ?? undefined,
-          assignedToId: assignedTo ?? undefined,
-        },
-      }),
+      prisma.company.count({ where }),
     ]);
   
     //  RETURN STRUCTURED RESPONSE
@@ -254,17 +238,24 @@ export const getMyCompanies = async (
   input: Partial<ListCompaniesInput> = {}
 ) => {
   // Use the same schema, but default to the provided limits
-  const { status, domain, page, limit } = listCompaniesSchema.parse(input);
+  const { status, domain, page, limit,q } = listCompaniesSchema.parse(input);
   const skip = (page - 1) * limit;
+
+  const whereClause = {
+    orgId,
+    assignedToId: userId,
+    status: status ?? undefined,
+    domain: domain ?? undefined,
+    // Add the search logic 
+    OR: q ? [
+      { name: { contains: q, mode: "insensitive" as Prisma.QueryMode } },
+      { contactName: { contains: q, mode: "insensitive" as Prisma.QueryMode } },
+    ] : undefined,
+  };
 
   const [companies, total] = await Promise.all([
     prisma.company.findMany({
-      where: {
-        orgId,
-        assignedToId: userId,           // Force scope to this user
-        status: status ?? undefined,     // Allow filtering by status for Kanban
-        domain: domain ?? undefined,
-      },
+      where: whereClause,
       include: {
         activities: {
           orderBy: { createdAt: "desc" },
