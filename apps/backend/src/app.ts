@@ -21,6 +21,26 @@ import hpp from "hpp";
 
 const app=express();
 
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://www.sponscrm.tech",        // Removed slash
+  "https://sponscrm.tech",            // Added apex domain just in case
+  "https://spons-crm-frontend.vercel.app", // Removed slash
+];
+
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
+
 // 1. Set security HTTP headers
 app.use(helmet());
 
@@ -37,7 +57,7 @@ app.use("/api", limiter);
 
 // Strict limiter for Auth routes
 const authLimiter = rateLimit({
-  max: 10, // Limit to 10 requests per window
+  max: 50, // Limit to 10 requests per window
   windowMs: 10 * 60 * 1000, // 10 minutes
   message: "Too many login attempts, please try again after 10 minutes",
 });
@@ -51,23 +71,9 @@ app.use(cookieParser());
 // 4. Prevent HTTP Parameter Pollution
 app.use(hpp());
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://www.sponscrm.tech",        // Removed slash
-  "https://sponscrm.tech",            // Added apex domain just in case
-  "https://spons-crm-frontend.vercel.app", // Removed slash
-];
 
-app.use(cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true
-  }));
+
+
 
 app.get("/", (_req: Request, res: Response) => {
     res.send("Express + TypeScript Server");
