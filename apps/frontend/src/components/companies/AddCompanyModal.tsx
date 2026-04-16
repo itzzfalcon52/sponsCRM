@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { 
-  Building2, UserCircle, Globe, Link, Phone, 
+  Building2, UserCircle, Globe, Phone, 
   IndianRupee, Building, Loader2, ChevronDown, 
-  Notebook, AlertCircle, Sparkles, CheckCircle2 
+  Notebook, AlertCircle, Sparkles, CheckCircle2,
+  Hash, Info
 } from "lucide-react";
 import { 
   Dialog, DialogContent, DialogHeader, 
@@ -10,8 +11,20 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useCompanies } from "../../hooks/useCompany";
-import { useDuplicateCheck } from "../../hooks/useDuplicateCheck"; // Custom hook we discussed
+import { useDuplicateCheck } from "../../hooks/useDuplicateCheck";
 import { cn } from "@/lib/utils";
+
+// Custom LinkedIn SVG Component for SaaS-level branding
+const LinkedInIcon = ({ className }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="currentColor" 
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/>
+  </svg>
+);
 
 const domains = [
   { value: "EDTECH", label: "EdTech" },
@@ -49,7 +62,6 @@ export default function AddCompanyModal({ open, onClose }: { open: boolean; onCl
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [forceCreate, setForceCreate] = useState(false);
 
-  // Ghost Search Logic
   const { suggestions, isChecking } = useDuplicateCheck(form.name);
 
   useEffect(() => {
@@ -77,7 +89,7 @@ export default function AddCompanyModal({ open, onClose }: { open: boolean; onCl
       name: form.name.trim(),
       contactName: form.contactName.trim(),
       amount: form.amount ? Number(form.amount) : undefined,
-      force: forceCreate // Pass force flag to backend
+      force: forceCreate 
     };
 
     setIsSubmitting(true);
@@ -95,153 +107,194 @@ export default function AddCompanyModal({ open, onClose }: { open: boolean; onCl
 
   return (
     <Dialog open={open} onOpenChange={() => !isSubmitting && onClose()}>
-      <DialogContent className="sm:max-w-[550px] p-0 gap-0 border-none shadow-2xl bg-white rounded-[2rem] overflow-hidden">
+      <DialogContent className="sm:max-w-[620px] p-0 gap-0 border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] bg-white rounded-[3rem] overflow-hidden">
         
-        {/* SaaS Header with Gradient Backdrop */}
-        <DialogHeader className="relative px-8 pt-8 pb-6 bg-gradient-to-br from-slate-50 to-indigo-50/30 border-b border-slate-100">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200 rotate-3 group-hover:rotate-0 transition-transform">
-              <Sparkles className="h-6 w-6 text-white" />
+        {/* SaaS Header: Premium Aesthetic */}
+        <DialogHeader className="relative px-12 pt-12 pb-10 bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-800 text-white">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <Building2 className="h-32 w-32 rotate-12" />
+          </div>
+          <div className="relative z-10 flex items-center gap-6">
+            <div className="h-16 w-16 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center border border-white/20 shadow-2xl transition-transform hover:scale-110 active:scale-95 duration-500">
+              <Sparkles className="h-8 w-8 text-white" />
             </div>
-            <div className="space-y-0.5">
-              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">New Pipeline Entry</DialogTitle>
-              <DialogDescription className="text-slate-500 font-medium">
-                Add a high-potential lead to your organization.
+            <div className="space-y-1">
+              <DialogTitle className="text-3xl font-black tracking-tight">Add New Partner</DialogTitle>
+              <DialogDescription className="text-indigo-100 font-medium text-base">
+                Capture new opportunities for your workspace.
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="px-8 py-6 space-y-6 max-h-[65vh] overflow-y-auto custom-scrollbar">
+        <div className="px-12 py-10 space-y-10 max-h-[60vh] overflow-y-auto custom-scrollbar bg-slate-50/30">
           
-          {/* Section: Basic Identity */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-1 w-8 bg-indigo-600 rounded-full" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Company Identity</span>
+          {/* Section: Core Identity */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-2 w-10 bg-indigo-600 rounded-full" />
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Core Identity</span>
+              </div>
+              <Info className="h-4 w-4 text-slate-300" />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Company Name *</label>
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Official Company Name *</label>
               <div className="relative group">
-                <Building className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                <Building className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className={cn(
-                    "w-full pl-11 pr-12 h-12 text-sm font-bold bg-slate-50 border-transparent rounded-2xl transition-all focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500",
-                    errors.name && "border-red-500 bg-red-50 focus:ring-red-500/10"
+                    "w-full pl-14 pr-14 h-16 text-base font-bold bg-white border-2 border-slate-100 rounded-3xl transition-all shadow-sm focus:ring-8 focus:ring-indigo-600/5 focus:border-indigo-600",
+                    errors.name && "border-red-500/50 bg-red-50/30 focus:ring-red-500/5"
                   )}
-                  placeholder="e.g. Google Cloud"
+                  placeholder="e.g. Microsoft Corporation"
                 />
-                {isChecking && <Loader2 className="absolute right-4 top-3.5 h-5 w-5 animate-spin text-indigo-500" />}
+                {isChecking && <Loader2 className="absolute right-5 top-1/2 -translate-y-1/2 h-6 w-6 animate-spin text-indigo-600" />}
               </div>
 
-              {/* GHOST SEARCH ALERT */}
               {suggestions.length > 0 && (
-                <div className="mt-2 p-4 bg-amber-50/50 border border-amber-100 rounded-2xl animate-in fade-in slide-in-from-top-2">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle className="h-4 w-4 text-amber-600" />
-                    <span className="text-[10px] font-black uppercase text-amber-800 tracking-tight">Similar records detected</span>
+                <div className="mt-3 p-5 bg-amber-50/50 border-2 border-amber-100 rounded-3xl animate-in zoom-in-95 duration-500">
+                  <div className="flex items-center gap-3 mb-3">
+                    <AlertCircle className="h-5 w-5 text-amber-600" />
+                    <span className="text-xs font-black uppercase text-amber-800 tracking-tight">Possible Duplicates Found</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {suggestions.map((s) => (
-                      <span key={s} className="px-3 py-1 bg-white border border-amber-200 text-[11px] font-bold text-slate-600 rounded-lg shadow-sm">
+                      <div key={s} className="px-4 py-1.5 bg-white border border-amber-200/50 text-xs font-bold text-slate-600 rounded-2xl shadow-sm">
                         {s}
-                      </span>
+                      </div>
                     ))}
                   </div>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Section: Contact Details */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Contact Lead *</label>
-              <div className="relative">
-                <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  value={form.contactName}
-                  onChange={(e) => setForm({ ...form, contactName: e.target.value })}
-                  className="w-full pl-11 h-12 text-sm font-bold bg-slate-50 border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
-                  placeholder="POC Name"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Domain *</label>
-              <div className="relative">
-                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <select
-                  value={form.domain}
-                  onChange={(e) => setForm({ ...form, domain: e.target.value })}
-                  className="w-full pl-11 pr-10 h-12 text-sm font-bold bg-slate-50 border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all appearance-none"
-                >
-                  <option value="">Select Sector</option>
-                  {domains.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              </div>
+            <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-3">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Contact Lead *</label>
+                    <div className="relative group">
+                        <UserCircle className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                        <input
+                            value={form.contactName}
+                            onChange={(e) => setForm({ ...form, contactName: e.target.value })}
+                            className="w-full pl-14 h-16 text-base font-bold bg-white border-2 border-slate-100 rounded-3xl focus:ring-8 focus:ring-indigo-600/5 focus:border-indigo-600 transition-all shadow-sm"
+                            placeholder="Primary Name"
+                        />
+                    </div>
+                </div>
+                <div className="space-y-3">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Sector *</label>
+                    <div className="relative group">
+                        <Globe className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                        <select
+                            value={form.domain}
+                            onChange={(e) => setForm({ ...form, domain: e.target.value })}
+                            className="w-full pl-14 pr-12 h-16 text-base font-bold bg-white border-2 border-slate-100 rounded-3xl focus:ring-8 focus:ring-indigo-600/5 focus:border-indigo-600 transition-all appearance-none shadow-sm"
+                        >
+                            <option value="">Choose Industry</option>
+                            {domains.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+                        </select>
+                        <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
+                    </div>
+                </div>
             </div>
           </div>
 
-          {/* Section: Financials & Notes */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-1 w-8 bg-slate-200 rounded-full" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Deal Specifics</span>
+          {/* Section: Communication */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="h-2 w-10 bg-slate-200 rounded-full" />
+              <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Communication</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Amount</label>
-                <div className="relative">
-                  <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-3">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Mobile / Desk</label>
+                    <div className="relative group">
+                        <Phone className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                        <input
+                            value={form.phoneNumber}
+                            onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
+                            className="w-full pl-14 h-16 text-base font-bold bg-white border-2 border-slate-100 rounded-3xl focus:ring-8 focus:ring-indigo-600/5 focus:border-indigo-600 transition-all shadow-sm"
+                            placeholder="+XX XXXXX XXXXX"
+                        />
+                    </div>
+                </div>
+                <div className="space-y-3">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Professional URL</label>
+                    <div className="relative group">
+                        <LinkedInIcon className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                        <input
+                            value={form.linkedinUrl}
+                            onChange={(e) => setForm({ ...form, linkedinUrl: e.target.value })}
+                            className="w-full pl-14 h-16 text-base font-bold bg-white border-2 border-slate-100 rounded-3xl focus:ring-8 focus:ring-indigo-600/5 focus:border-indigo-600 transition-all shadow-sm"
+                            placeholder="linkedin.com/..."
+                        />
+                    </div>
+                </div>
+            </div>
+          </div>
+
+          {/* Section: Deal Intelligence */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="h-2 w-10 bg-slate-200 rounded-full" />
+              <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Deal Intelligence</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Target Amount</label>
+                <div className="relative group">
+                  <IndianRupee className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                   <input
                     type="number"
                     value={form.amount}
                     onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                    className="w-full pl-11 h-12 text-sm font-bold bg-slate-50 border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500"
-                    placeholder="50,000"
+                    className="w-full pl-14 h-16 text-base font-bold bg-white border-2 border-slate-100 rounded-3xl focus:ring-8 focus:ring-indigo-600/5 focus:border-indigo-600 shadow-sm"
+                    placeholder="Planned Ask"
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Deal Type</label>
-                <select
-                  value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value })}
-                  className="w-full px-4 h-12 text-sm font-bold bg-slate-50 border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all appearance-none"
-                >
-                  <option value="CASH">Cash Funding</option>
-                  <option value="IN_KIND">In-Kind (Product)</option>
-                </select>
+              <div className="space-y-3">
+                <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Payment Strategy</label>
+                <div className="relative group">
+                    <select
+                        value={form.type}
+                        onChange={(e) => setForm({ ...form, type: e.target.value })}
+                        className="w-full px-6 h-16 text-base font-bold bg-white border-2 border-slate-100 rounded-3xl focus:ring-8 focus:ring-indigo-600/5 focus:border-indigo-600 transition-all appearance-none shadow-sm"
+                    >
+                        <option value="CASH">Cash Transfer</option>
+                        <option value="IN_KIND">In-Kind (Barter)</option>
+                    </select>
+                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Contextual Note</label>
-              <div className="relative">
-                <Notebook className="absolute left-4 top-4 h-4 w-4 text-slate-400" />
+            <div className="space-y-3">
+              <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Strategic Summary</label>
+              <div className="relative group">
+                <Notebook className="absolute left-5 top-6 h-5 w-5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                 <textarea
                   value={form.note}
                   onChange={(e) => setForm({ ...form, note: e.target.value })}
-                  className="w-full pl-11 pr-4 py-4 min-h-[100px] text-sm font-bold bg-slate-50 border-transparent rounded-3xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all resize-none"
-                  placeholder="Write a brief strategy note..."
+                  className="w-full pl-14 pr-6 py-6 min-h-[140px] text-base font-bold bg-white border-2 border-slate-100 rounded-[2.5rem] focus:ring-8 focus:ring-indigo-600/5 focus:border-indigo-600 transition-all resize-none shadow-sm"
+                  placeholder="What is the potential of this partnership?..."
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Action Footer */}
-        <DialogFooter className="px-8 py-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-4">
+        {/* Action Footer: High-Friction Confirms */}
+        <DialogFooter className="px-12 py-10 bg-white border-t border-slate-100 flex items-center justify-between gap-6">
           <button 
             onClick={onClose} 
-            className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors"
+            className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all active:scale-90"
           >
             Discard
           </button>
@@ -249,18 +302,18 @@ export default function AddCompanyModal({ open, onClose }: { open: boolean; onCl
             onClick={handleSubmit} 
             disabled={isSubmitting} 
             className={cn(
-              "h-12 px-8 rounded-2xl font-black transition-all active:scale-95 shadow-xl",
+              "h-16 px-12 rounded-[2rem] font-black text-lg transition-all active:scale-95 shadow-[0_20px_40px_-12px_rgba(79,70,229,0.3)]",
               forceCreate 
                 ? "bg-amber-600 hover:bg-amber-700 text-white shadow-amber-200" 
-                : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white"
             )}
           >
             {isSubmitting ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-6 w-6 animate-spin" />
             ) : forceCreate ? (
-              "Create Anyway"
+              "Bypass & Create"
             ) : (
-              <>Create Company <CheckCircle2 className="ml-2 h-4 w-4" /></>
+              <span className="flex items-center gap-3">Finalize Partner <CheckCircle2 className="h-5 w-5" /></span>
             )}
           </Button>
         </DialogFooter>
