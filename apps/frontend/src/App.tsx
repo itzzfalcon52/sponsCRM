@@ -18,6 +18,8 @@ import { api } from './api/axios'
 import { useAuthStore } from './stores/authstore'
 import Activities from './pages/Activities'
 import Pipeline from './pages/Pipeline'
+import FeaturesPage from './pages/Features'
+import PricingPage from './pages/PricingPage'
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="flex min-h-screen flex-col">
@@ -74,6 +76,24 @@ const App = () => {
         element={
           <MainLayout>
             <Register />
+          </MainLayout>
+        } 
+      />
+
+      <Route 
+        path='/features' 
+        element={
+          <MainLayout>
+            <FeaturesPage />
+          </MainLayout>
+        } 
+      />
+
+      <Route 
+        path='/pricing' 
+        element={
+          <MainLayout>
+            <FeaturesPage />
           </MainLayout>
         } 
       />
