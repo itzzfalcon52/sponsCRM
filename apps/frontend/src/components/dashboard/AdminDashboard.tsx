@@ -24,6 +24,7 @@ import {
   PieChart,
   Pie,
   Cell
+  
 } from "recharts";
 
 export default function AdminDashboard() {
@@ -64,6 +65,8 @@ export default function AdminDashboard() {
   const totalInKind = closedDeals
     .filter((c: any) => c.type === "IN_KIND")
     .reduce((sum: number, c: any) => sum + (c.amount || 0), 0);
+
+  console.log(totalCash, totalInKind);
 
   // Formatter for currency
   const formatCurrency = (amount: number) => {
