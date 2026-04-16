@@ -100,9 +100,9 @@ export default function Sidebar() {
       {/* Bottom Actions */}
       <div className="p-4 border-t border-slate-100">
         <Link
-          to="/organization"
+          to="/settings"
           className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-            location.pathname === "/organization"
+            location.pathname === "/settings"
               ? "bg-indigo-50 text-indigo-700"
               : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
           }`}
