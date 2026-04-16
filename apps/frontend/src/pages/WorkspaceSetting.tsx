@@ -55,10 +55,12 @@ export default function WorkspaceSettings() {
   };
 
   const handleDelete = () => {
-    if (confirmName !== user?.organization?.name) {
+    if (confirmName !== orgName) {
       return toast.error("Organization name does not match.");
     }
-    deleteOrg();
+    if (window.confirm("This action is irreversible. Are you absolutely sure?")) {
+        deleteOrg();
+      }
   };
 
   return (
