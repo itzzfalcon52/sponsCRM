@@ -60,7 +60,7 @@ export default function Pipeline() {
   return (
     <div className="h-screen flex flex-col bg-[#f9fafb] overflow-hidden">
       
-      {/* SaaS Premium Scrollbar Styling */}
+      {/*  Scrollbar Styling */}
       <style dangerouslySetInnerHTML={{__html: `
         .kanban-board-wrapper::-webkit-scrollbar { height: 10px; }
         .kanban-board-wrapper::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
