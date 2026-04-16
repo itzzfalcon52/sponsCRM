@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuthStore } from "../../stores/authstore";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../api/axios"; 
 import { 
   Building2,
@@ -128,7 +128,9 @@ export default function Topbar() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="p-3 cursor-pointer text-slate-600 font-medium">
+              <Link to="/profile" className="flex items-center">
                 <UserIcon className="mr-3 h-4 w-4 text-slate-400" /> Account Settings
+              </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
