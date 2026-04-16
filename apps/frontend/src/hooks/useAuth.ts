@@ -58,8 +58,14 @@ export const useAuth = () => {
     const logoutMutation = useMutation({
         mutationFn: authApi.logout,
         onSuccess: () => {
+            // 1. Clear Zustand immediately
             logoutStore();
-            queryClient.clear(); // Clear all queries to remove any user-specific data
+            
+            // 2. Remove the specific auth query so the useEffect doesn't see old data
+            queryClient.removeQueries({ queryKey: ['authUser'] });
+            
+            // 3. Clear everything else (Companies, Orgs, etc.)
+            queryClient.clear(); 
         },
     });
 

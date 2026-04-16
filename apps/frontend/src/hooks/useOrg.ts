@@ -17,8 +17,9 @@ export const useOrg = () => {
   const createOrgMutation = useMutation({
     mutationFn: orgApi.createOrg,
     
-    onSuccess: async () => {
-      setUser(data.data.user); //we update the zustand user state with the organization details
+    onSuccess: async (res) => {
+      const updatedUser=res.data.user;
+      setUser(updatedUser); //we update the zustand user state with the organization details
       await queryClient.invalidateQueries({ queryKey: ["authUser"] });
       await queryClient.invalidateQueries({ queryKey: ["orgMembers"] });
     },
@@ -26,8 +27,11 @@ export const useOrg = () => {
 
   const joinOrgMutation = useMutation({
     mutationFn: orgApi.joinOrg,
-    onSuccess: async () => {
-      setUser(data.data.user); //we update the zustand user state with the organization details
+    onSuccess: async (res) => {
+      
+      // Use the response 'res' from the backend, not the 'data' from useQuery
+        const updatedUser = res.data.user;
+        setUser(updatedUser);
       await queryClient.invalidateQueries({ queryKey: ["authUser"] });
       await queryClient.invalidateQueries({ queryKey: ["orgMembers"] });
     },

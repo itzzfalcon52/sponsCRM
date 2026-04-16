@@ -57,7 +57,6 @@ export const createSendToken = (
   // Send response
   res.status(statusCode).json({
     status: "success",
-    token,
     data: {
       user,
       ...extraData,

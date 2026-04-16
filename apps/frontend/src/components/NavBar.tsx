@@ -21,13 +21,30 @@ import {
 
 export default function NavBar() {
   const { user, isAuthenticated } = useAuthStore();
+  const logoutStore= useAuthStore((state) => state.logout);
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleLogout = async () => {
-    await logout();
-    navigate("/");
+    try {
+      // 1. Wait for the backend to clear the HttpOnly cookie
+      await logout(); 
+  
+      // 2. Manually trigger a store clear if your hook's 
+      // onSuccess is feeling sluggish
+      // useAuthStore.getState().logout(); 
+  
+      // 3. Force navigate to landing with 'replace' 
+      // This prevents the user from hitting "back" to enter the dashboard
+      navigate("/", { replace: true });
+      
+    } catch (error) {
+      console.error("Logout failed", error);
+      // Even if the API fails, we usually want to clear the local state
+      logoutStore();
+      navigate("/login");
+    }
   };
 
   const isActive = (path: string) => location.pathname === path;
