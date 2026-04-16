@@ -20,11 +20,14 @@ import Activities from './pages/Activities'
 import Pipeline from './pages/Pipeline'
 import FeaturesPage from './pages/Features'
 import PricingPage from './pages/PricingPage'
+import AboutPage from './pages/AboutPage'
+import Footer from './components/landing/Footer'
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="flex min-h-screen flex-col">
     <NavBar />
     <main className="flex-1">{children}</main>
+    <Footer/>
   </div>
 );
 
@@ -93,7 +96,16 @@ const App = () => {
         path='/pricing' 
         element={
           <MainLayout>
-            <FeaturesPage />
+            <PricingPage />
+          </MainLayout>
+        } 
+      />
+
+       <Route 
+        path='/about' 
+        element={
+          <MainLayout>
+            <AboutPage />
           </MainLayout>
         } 
       />
