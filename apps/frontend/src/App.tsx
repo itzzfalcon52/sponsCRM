@@ -24,6 +24,7 @@ import AboutPage from './pages/AboutPage'
 import Footer from './components/landing/Footer'
 import OrgRequiredRoute from './components/OrgRequiredRoute'
 import WorkspaceSettings from './pages/WorkspaceSetting'
+import Profile from './pages/Profile'
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="flex min-h-screen flex-col">
@@ -128,6 +129,17 @@ const App = () => {
           <MainLayout>
             <ProtectedRoute>
             <Org />
+            </ProtectedRoute>
+          </MainLayout>
+        } 
+      />
+
+<Route 
+        path='/profile' 
+        element={
+          <MainLayout>
+            <ProtectedRoute>
+            <Profile/>
             </ProtectedRoute>
           </MainLayout>
         } 
