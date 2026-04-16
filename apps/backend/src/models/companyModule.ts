@@ -2,6 +2,7 @@ import { prisma } from "../lib/prisma.js";
 import { Prisma } from "../../generated/prisma/client";
 import { z } from "zod";
 import { Domain } from "../../generated/prisma/client.js";
+import {createNotification,getMyNotifications} from "./notificationModule.js";
 
 /* ================================
    ENUM SCHEMAS
@@ -317,10 +318,24 @@ export const assignCompany = async (
     }
   
     // 3. Update
-    return prisma.company.update({
+    const updatedCompany=  await prisma.company.update({
       where: { id: companyId },
       data: { assignedToId },
     });
+
+    // TRIGGER NOTIFICATION: Only if assigned to a user (not unassigned)
+    if (assignedToId) {
+      await createNotification(
+        assignedToId,
+        orgId,
+        "New Company Assigned",
+        `You have been assigned to manage ${updatedCompany.name}.`,
+        "ASSIGNMENT",
+        `/dashboard/companies/${companyId}`
+      );
+    }
+
+    return updatedCompany;
   }; 
 
 /* ================================
@@ -333,6 +348,7 @@ export const bulkAssignSchema = z.object({
       .min(1, "At least one company must be selected"),
   
       assignedToId: z.string().pipe(z.uuid()).nullable().optional(),
+      count:z.number().optional(), // For response, not input
   });
   
   export type BulkAssignInput = z.infer<typeof bulkAssignSchema>;
@@ -344,13 +360,28 @@ export const bulkAssignCompanies = async (
     orgId: string,
     assignedToId: string | null 
   ) => {
-    return prisma.company.updateMany({
+    const result = await prisma.company.updateMany({
       where: {
         id: { in: companyIds },
         orgId, 
       },
+     
       data: {
         assignedToId,
       },
     });
+
+    // TRIGGER NOTIFICATION: For bulk actions
+    if (assignedToId && result.count > 0) {
+      await createNotification(
+        assignedToId,
+        orgId,
+        "Bulk Assignment",
+        `${result.count} new companies have been assigned to your portfolio.`,
+        "ASSIGNMENT",
+        `/dashboard/companies`
+      );
+    }
+
+    return result;
   };

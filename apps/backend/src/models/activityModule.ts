@@ -1,22 +1,22 @@
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import type { ActivityType, Status } from "../../generated/prisma/client.js";
+import { createNotification } from "./notificationModule.js";
 
 /**
- *  VALIDATION SCHEMA
+ * VALIDATION SCHEMA
  */
 export const createActivitySchema = z.object({
   companyId: z.string().uuid(),
   type: z.enum(["CALL", "EMAIL", "MEETING"]),
   note: z.string().max(500).optional(),
   nextFollowUp: z.string().optional(),
-  
 });
 
 export type CreateActivityInput = z.infer<typeof createActivitySchema>;
 
 /**
- *  SMART FOLLOW-UP GENERATOR
+ * SMART FOLLOW-UP GENERATOR
  */
 const getNextFollowUp = (type: ActivityType): Date => {
   const now = Date.now();
@@ -34,7 +34,7 @@ const getNextFollowUp = (type: ActivityType): Date => {
 };
 
 /**
- *  CREATE ACTIVITY 
+ * CREATE ACTIVITY 
  */
 export const createActivity = async (
   userId: string,
@@ -51,28 +51,31 @@ export const createActivity = async (
 
   const activity = await prisma.$transaction(async (tx) => {
     /**
-     *  Fetch company WITHIN transaction 
+     * Fetch company AND user name WITHIN transaction 
      */
-    const company = await tx.company.findFirst({
-      where: {
-        id: data.companyId,
-        orgId,
-      },
-      select: {
-        id: true,
-        assignedToId: true,
-        createdById: true,
-        nextFollowUp: true,
-        status: true,
-      },
-    });
+    const [company, currentUser] = await Promise.all([
+      tx.company.findFirst({
+        where: { id: data.companyId, orgId },
+        select: {
+          id: true,
+          name: true,
+          assignedToId: true,
+          createdById: true,
+          status: true,
+        },
+      }),
+      tx.user.findUnique({
+        where: { id: userId },
+        select: { name: true }
+      })
+    ]);
 
     if (!company) {
       throw new Error("Company not found in your organization");
     }
 
     /**
-     *  ROLE-BASED ACCESS CONTROL
+     * ROLE-BASED ACCESS CONTROL
      */
     if (userRole === "MEMBER") {
       if (
@@ -84,9 +87,9 @@ export const createActivity = async (
     }
 
     /**
-     *  Create activity
+     * Create activity
      */
-    const activity = await tx.activity.create({
+    const newActivity = await tx.activity.create({
       data: {
         type: data.type,
         note: data.note,
@@ -96,14 +99,12 @@ export const createActivity = async (
     });
 
     /**
-     *  Update company automatically
+     * Update company automatically
      */
-    await tx.company.update({
+    const updatedCompany = await tx.company.update({
       where: { id: data.companyId },
       data: {
         lastContactedAt: new Date(),
-
-        //  Generate a NEW future date, do not use `company.nextFollowUp ??`
         nextFollowUp: data.nextFollowUp
          ? normalizeDate(new Date(data.nextFollowUp))
          : normalizeDate(getNextFollowUp(data.type)),
@@ -115,14 +116,36 @@ export const createActivity = async (
       },
     });
 
-    return activity;
+    /**
+     * NOTIFICATION LOGIC: Notify Admins if a high-value status is reached
+     */
+    if (["POSITIVE", "CLOSED"].includes(updatedCompany.status as string)) {
+      // Find the Admin of the Org
+      const admin = await tx.user.findFirst({
+        where: { orgId, role: "ADMIN" },
+        select: { id: true }
+      });
+
+      if (admin) {
+        await createNotification(
+          admin.id,
+          orgId,
+          "Milestone Reached! 🚀",
+          `${currentUser?.name || "A member"} moved ${updatedCompany.name} to ${updatedCompany.status}.`,
+          "SYSTEM",
+          `/dashboard/companies/${updatedCompany.id}`
+        );
+      }
+    }
+
+    return newActivity;
   });
 
-  return activity;
+  return activity; // Fixed: using correctly scoped variable name
 };
 
 /**
- *  GET ACTIVITIES FOR A COMPANY (TIMELINE)
+ * GET ACTIVITIES FOR A COMPANY (TIMELINE)
  */
 export const getActivitiesByCompany = async (
   companyId: string,
@@ -131,39 +154,26 @@ export const getActivitiesByCompany = async (
   return prisma.activity.findMany({
     where: {
       companyId,
-      company: {
-        orgId, //  ensure org isolation
-      },
+      company: { orgId },
     },
-
     include: {
       user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
+        select: { id: true, name: true, email: true },
       },
     },
-
-    orderBy: {
-      createdAt: "desc", // latest first
-    },
+    orderBy: { createdAt: "desc" },
   });
 };
 
 export const getAllActivities = async (req: any, res: any) => {
   const orgId = req.user.orgId;
   const role = req.user.role;
-  const userId = req.user.id; // From your JWT payload/protect middleware
+  const userId = req.user.id;
 
   const whereClause: any = {
-    company: {
-      orgId,
-    },
+    company: { orgId },
   };
 
-  // If the user is a MEMBER, only return their own activities
   if (role === "MEMBER") {
     whereClause.userId = userId;
   }
@@ -174,9 +184,7 @@ export const getAllActivities = async (req: any, res: any) => {
       user: true,
       company: true,
     },
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: { createdAt: "desc" },
     take: 50,
   });
 };
@@ -192,11 +200,7 @@ export const getFollowUps = async (req: any) => {
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
 
-  //  ROLE-BASED FILTER
-  const whereCondition =
-    role === "MEMBER"
-      ? { assignedToId: userId }
-      : {};
+  const whereCondition = role === "MEMBER" ? { assignedToId: userId } : {};
 
   const overdue = await prisma.company.findMany({
     where: {
@@ -204,29 +208,17 @@ export const getFollowUps = async (req: any) => {
       nextFollowUp: { lt: today },
       ...whereCondition,
     },
-    include: {
-      assignedTo: true,
-    },
+    include: { assignedTo: true },
   });
 
   const todayFollowUps = await prisma.company.findMany({
     where: {
       orgId,
-      nextFollowUp: {
-        gte: today,
-        lt: tomorrow,
-      },
+      nextFollowUp: { gte: today, lt: tomorrow },
       ...whereCondition,
     },
-    include: {
-      assignedTo: true,
-    },
+    include: { assignedTo: true },
   });
 
- 
-
-  return {
-    overdue,
-    today: todayFollowUps,
-  };
+  return { overdue, today: todayFollowUps };
 };

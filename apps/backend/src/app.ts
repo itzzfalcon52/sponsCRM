@@ -8,7 +8,7 @@ import orgRoute from "./routes/orgRoute.js";
 import companyRoutes from "./routes/companyRoutes.js"
 import activityRoute from "./routes/activityRoute.js"
 import exportRoute from "./routes/exportRoute.js";
-
+import notificationRoutes from "./routes/notificationRoutes.js";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import hpp from "hpp";
@@ -86,6 +86,7 @@ app.use("/api/v1/org", orgRoute);
 app.use("/api/v1/companies",companyRoutes)
 app.use("/api/v1/activities",activityRoute)
 app.use("/api/v1/google", exportRoute);
+app.use("/api/v1/notifications", notificationRoutes);
 
 
 
