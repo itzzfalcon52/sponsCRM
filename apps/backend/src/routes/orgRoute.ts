@@ -10,7 +10,7 @@ const router = express.Router();
 router.use(protect);
 router.post("/create",validate(createOrganizationSchema),createOrg);
 router.post("/join",joinOrg);
-router.get("/members",restrictTo("ADMIN"),getOrgMembers);
+router.get("/members",restrictTo("ADMIN","SENIOR"),getOrgMembers);
 router.delete("/members/:memberId",restrictTo("ADMIN"),removeOrgMember);
 router.patch("/members/:memberId/role", restrictTo("ADMIN"), updateMemberRoleController);
 
