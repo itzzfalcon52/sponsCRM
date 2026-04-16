@@ -167,25 +167,35 @@ export const leaveOrganization = async (userId: string, orgId: string) => {
 
 export const deleteFullOrganization = async (orgId: string) => {
   return await prisma.$transaction(async (tx) => {
-    // 1. Delete all activities linked to companies in this org
+    // 1. Delete ALL activities for all companies belonging to this org
+    // We filter by company: { orgId }
     await tx.activity.deleteMany({
-      where: { company: { orgId } },
+      where: {
+        company: {
+          orgId: orgId
+        }
+      }
     });
 
-    // 2. Delete all companies in this org
+    // 2. Clear relations in the Company table before deleting
+    // We need to set assignedToId and createdById to null or delete companies
+    // Since we are deleting the whole org, we delete the companies.
     await tx.company.deleteMany({
-      where: { orgId },
+      where: { orgId }
     });
 
-    // 3. Reset all users who were in this org to have no org
+    // 3. Update all Users who belong to this org
     await tx.user.updateMany({
       where: { orgId },
-      data: { orgId: null, role: "MEMBER" },
+      data: { 
+        orgId: null, 
+        role: "MEMBER" 
+      }
     });
 
-    // 4. Finally, delete the organization record
+    // 4. Finally, delete the Organization itself
     return await tx.organization.delete({
-      where: { id: orgId },
+      where: { id: orgId }
     });
   });
 };

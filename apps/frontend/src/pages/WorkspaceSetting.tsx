@@ -55,12 +55,16 @@ export default function WorkspaceSettings() {
   };
 
   const handleDelete = () => {
-    if (confirmName !== orgName) {
-      return toast.error("Organization name does not match.");
+    const currentActualName = user?.organization?.name || "";
+    
+    // .trim() removes accidental spaces, .toLowerCase() makes it case-insensitive
+    if (confirmName.trim().toLowerCase() !== currentActualName.trim().toLowerCase()) {
+      return toast.error(`Name does not match. Please type "${currentActualName}" exactly.`);
     }
+  
     if (window.confirm("This action is irreversible. Are you absolutely sure?")) {
-        deleteOrg();
-      }
+      deleteOrg();
+    }
   };
 
   return (

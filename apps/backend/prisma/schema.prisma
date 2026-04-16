@@ -118,7 +118,7 @@ model Company {
   createdById String
   createdBy User @relation("CreatedCompanies", fields: [createdById], references: [id])
   orgId String
-  organization Organization @relation(fields: [orgId], references: [id])
+  organization Organization @relation(fields: [orgId], references: [id],onDelete: Cascade)
 
   @@unique([name, orgId]) //WITHIN SAME OIRGANIZATION COMPANY NAME SHOULD BE UNIQUE
   @@index([orgId]) // Index = shortcut for database search WITHOUT THIS DB SCANS ALL RECORDS TO FIND MATCHING ORG ID
@@ -134,7 +134,7 @@ model Activity{
   note      String?
 
   companyId String
-  company   Company  @relation(fields: [companyId], references: [id])
+  company   Company  @relation(fields: [companyId], references: [id],onDelete: Cascade)
 
   userId    String
   user      User     @relation(fields: [userId], references: [id])
