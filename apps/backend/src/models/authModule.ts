@@ -65,3 +65,36 @@ export const loginUser = async (input:LoginInput) => {
     const { password: _, ...safeUser } = user;
     return safeUser;
 }
+
+// 1. Update Profile (Name)
+export const updateUserDetails = async (userId:string, data:any) => {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { name: data.name },
+  });
+};
+
+// 2. Change Password
+export const updateUserPassword = async (userId:string, currentPassword:string, newPassword:string) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
+  if(!user) throw new Error("User not found");
+  
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) throw new Error("Current password incorrect");
+
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword },
+  });
+};
+
+// 3. Delete Account
+export const deleteUserAccount = async (userId:string) => {
+  // Logic: If user is an Admin, they should delete the org or transfer ownership first.
+  // For now, we simply remove them.
+  return await prisma.user.delete({
+    where: { id: userId },
+  });
+};

@@ -1,86 +1,138 @@
-import { useQueryClient,useQuery,useMutation } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "../stores/authstore";
 import { authApi } from "../api/authApi";
 import { useEffect } from "react";
-
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export const useAuth = () => {
     const queryClient = useQueryClient();
-    const setUser= useAuthStore((state) => state.setUser);
-    const logoutStore= useAuthStore((state) => state.logout);
+    const navigate = useNavigate();
+    
+    // Store Actions
+    const setUser = useAuthStore((state) => state.setUser);
+    const logoutStore = useAuthStore((state) => state.logout);
 
-
-    //Getting user data on app load
-
-    const { data, isLoading,} = useQuery({  //OnSuccess and onError are removed in favor of useEffect to handle side effects based on query state
+    /**
+     * 1. SESSION MANAGEMENT (GET /ME)
+     * Fetches user data on app load and keeps Zustand in sync.
+     */
+    const { data, isLoading } = useQuery({
         queryKey: ['authUser'],
         queryFn: authApi.me,
-        retry: false, // Don't retry on failure, as it likely means the user is not authenticated
-     
-    })
-
-    //Syncing Zustand with React Query data
-
-    useEffect(() => {
-       if(data?.data?.user){
-        setUser(data.data.user);
-       }
-       if (!isLoading && !data?.data?.user) {
-        setUser(null);
-      }
-    },[data,isLoading,setUser])
-
-    const user= data?.data?.user || null; // Extract user data or default to null if not available
-
-    //2.Login
-
-    const loginMutation = useMutation({
-        mutationFn: authApi.login,
-        onSuccess: (data) => {
-            setUser(data.data.user);
-            queryClient.invalidateQueries({ queryKey: ['authUser'] }); // Refresh user data after login
-        },
+        retry: false, 
     });
 
+    useEffect(() => {
+        if (data?.data?.user) {
+            setUser(data.data.user);
+        }
+        if (!isLoading && !data?.data?.user) {
+            setUser(null);
+        }
+    }, [data, isLoading, setUser]);
 
-    //2.SignUp
+    const user = data?.data?.user || null;
+
+    /**
+     * 2. LOGIN & SIGNUP
+     */
+    const loginMutation = useMutation({
+        mutationFn: authApi.login,
+        onSuccess: (res) => {
+            setUser(res.data.user);
+            queryClient.invalidateQueries({ queryKey: ['authUser'] });
+            toast.success("Welcome back!");
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message || "Login failed");
+        }
+    });
 
     const signUpMutation = useMutation({
         mutationFn: authApi.signUp,
-        onSuccess: (data) => {
-            setUser(data.data.user);
-            queryClient.invalidateQueries({ queryKey: ['authUser'] }); // Refresh user data after signup
+        onSuccess: (res) => {
+            setUser(res.data.user);
+            queryClient.invalidateQueries({ queryKey: ['authUser'] });
+            toast.success("Account created successfully!");
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message || "Signup failed");
+        }
+    });
+
+    /**
+     * 3. PROFILE & PASSWORD MANAGEMENT
+     */
+    const updateProfileMutation = useMutation({
+        mutationFn: (payload: { name: string }) => authApi.updateProfile(payload),
+        onSuccess: (res) => {
+            // Update local store immediately so UI reflects name change
+            setUser(res.data.user);
+            queryClient.invalidateQueries({ queryKey: ['authUser'] });
+            toast.success("Profile updated");
         },
     });
 
-    //3.logout
+    const changePasswordMutation = useMutation({
+        mutationFn: (payload: any) => authApi.changePassword(payload),
+        onSuccess: () => {
+            // Backend clears cookie on pass change, so we must clear local state
+            logoutStore();
+            queryClient.clear();
+            navigate("/login");
+            toast.success("Password changed. Please log in again.");
+        },
+        onError: (err: any) => {
+            toast.error(err.response?.data?.message || "Failed to change password");
+        }
+    });
 
+    /**
+     * 4. LOGOUT & ACCOUNT DELETION
+     */
     const logoutMutation = useMutation({
         mutationFn: authApi.logout,
         onSuccess: () => {
-            // 1. Clear Zustand immediately
             logoutStore();
-            
-            // 2. Remove the specific auth query so the useEffect doesn't see old data
             queryClient.removeQueries({ queryKey: ['authUser'] });
-            
-            // 3. Clear everything else (Companies, Orgs, etc.)
             queryClient.clear(); 
+            navigate("/", { replace: true });
         },
     });
 
-    return{
+    const deleteAccountMutation = useMutation({
+        mutationFn: authApi.deleteAccount,
+        onSuccess: () => {
+            logoutStore();
+            queryClient.clear();
+            navigate("/", { replace: true });
+            toast.success("Account permanently deleted.");
+        },
+    });
+
+    return {
+        // Data
         user,
         isLoading,
-        login: loginMutation.mutateAsync,
         isAuthenticated: !!user,
+
+        // Auth Actions
+        login: loginMutation.mutateAsync,
         signUp: signUpMutation.mutateAsync,
         logout: logoutMutation.mutateAsync,
-        loginLoading: loginMutation.isPending,
-        signUpLoading: signUpMutation.isPending,
-        logoutLoading: logoutMutation.isPending,
 
-    }
+        // Profile Actions
+        updateProfile: updateProfileMutation.mutateAsync,
+        changePassword: changePasswordMutation.mutateAsync,
+        deleteAccount: deleteAccountMutation.mutateAsync,
 
-
-}
+        // Loading States
+        isLoggingIn: loginMutation.isPending,
+        isSigningUp: signUpMutation.isPending,
+        isUpdatingProfile: updateProfileMutation.isPending,
+        isChangingPassword: changePasswordMutation.isPending,
+        isDeletingAccount: deleteAccountMutation.isPending,
+        isLoggingOut: logoutMutation.isPending,
+    };
+};
