@@ -34,24 +34,34 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => (
 
 
 const App = () => {
-  const setUser = useAuthStore((s) => s.setUser);
-  const setLoading = useAuthStore((s) => s.setLoading);
-
+  const { setUser, setLoading, isLoading } = useAuthStore(); // Grab isLoading from store
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         setLoading(true);
         const res = await api.get("/auth/me");
-        const user = res.data.data.user;
-        setUser(user);
+        setUser(res.data.data.user);
       } catch {
         setUser(null);
+      } finally {
+        setLoading(false); // Ensure loading is false even on error
       }
     };
-
     fetchUser();
-  }, []);
+  }, [setUser, setLoading]);
+
+  // CRITICAL: Do not render routes until the initial auth check is done
+  if (isLoading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+          <p className="text-slate-500 font-bold animate-pulse">Syncing Session...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Routes>

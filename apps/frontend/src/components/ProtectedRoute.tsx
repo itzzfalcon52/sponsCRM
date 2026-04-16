@@ -1,9 +1,9 @@
-// src/components/ProtectedRoute.tsx
-import { Navigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+
+import { Navigate, Outlet } from "react-router-dom"; 
+import { useAuthStore } from "../stores/authstore";
 
 export default function ProtectedRoute({ children }: any) {
-  const {user, isLoading } = useAuth();
+  const { user, isLoading } = useAuthStore();
 
   if (isLoading) {
     return (
@@ -13,7 +13,8 @@ export default function ProtectedRoute({ children }: any) {
     );
   }
 
-  if (!user) return <Navigate to="/login" />;
+  if (!user) return <Navigate to="/login" replace />;
 
-  return children;
+  //  If children exist, render them. If not, render the Outlet.
+  return children ? children : <Outlet />;
 }
