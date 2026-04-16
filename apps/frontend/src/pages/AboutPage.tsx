@@ -9,6 +9,7 @@ import {
     Mail
   } from "lucide-react";
   
+  
   const values = [
     {
       title: "Efficiency First",
@@ -161,6 +162,8 @@ import {
             </div>
           </div>
         </section>
+
       </div>
+      
     );
   }

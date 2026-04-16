@@ -3,7 +3,7 @@ import HeroSection from "@/components/landing/HeroSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import ComparisonSection from "@/components/landing/ComparisonSection";
 import CTASection from "@/components/landing/CTASection";
-import Footer from "@/components/landing/Footer";
+
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ export default function Landing() {
       <FeaturesSection />
       <ComparisonSection />
       <CTASection navigate={navigate} />
-      <Footer />
+      
       
     </div>
   );
