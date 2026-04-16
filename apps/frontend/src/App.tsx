@@ -125,12 +125,14 @@ const App = () => {
       <Route path='/' element={
         <ProtectedRoute>
           <AppLayout/>
-          </ProtectedRoute>}>
+       
         <Route path='dashboard' element={<Dashboard />} />
         <Route path='companies/*' element={<Companies/>} />
         <Route path='team/*' element={<Team/>} />
         <Route path="activities/*" element={<Activities/>} />
         <Route path="pipeline/*" element={<Pipeline/>} />
+
+        </ProtectedRoute>}>
       </Route>
 
     </Routes>
