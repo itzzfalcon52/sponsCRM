@@ -7,7 +7,8 @@ import {
   deleteCompanyController,
   myCompaniesController,
   assignCompanyController,
-  bulkAssignController
+  bulkAssignController,
+  searchDuplicatesController
 } from "../controllers/companyController.js";
 
 import {
@@ -88,5 +89,8 @@ router.delete(
   restrictTo("ADMIN"),
   deleteCompanyController
 );
+
+
+router.get("/search/duplicates", protect, searchDuplicatesController);
 
 export default router;

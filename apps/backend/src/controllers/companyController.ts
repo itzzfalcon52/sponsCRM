@@ -13,6 +13,8 @@ import {
     bulkAssignCompanies,
     bulkAssignSchema,
   } from "../models/companyModule.js";
+  import { detectPotentialDuplicates } from "../utils/detectDuplicates.js";
+
 
 /* ================================
    CREATE COMPANY
@@ -22,9 +24,36 @@ export const createCompanyController = async (req: any, res: Response) => {
   try {
     const userId = req.user.id;
     const orgId = req.user.orgId;
+    const {name,force=false}=req.body;
 
-    console.log("REQ BODY:", req.body);
+    //1.fetch names of all matching companies
 
+    // Only run the duplicate check if they haven't already confirmed they want to bypass it
+    if(!force){
+
+    const existing=await prisma.company.findMany({
+      where:{orgId},
+      select:{
+        id:true,
+        name:true
+      }
+
+    })
+  
+
+    //2.run fuzzy check
+    const potentialDuplicates=detectPotentialDuplicates(name,existing);
+    if(potentialDuplicates.length>0){
+      //we don't block them but just warn the user
+      return res.status(409).json({
+       status:"warning",
+       message:"Potential duplicate company names detected. Please review before creating.",
+       suggestions:potentialDuplicates.map(c=>c.item.name)
+      })
+    }
+  }
+
+   
     if (!orgId) {
       return res.status(403).json({
         status: "fail",
@@ -311,4 +340,22 @@ export const bulkAssignController = async (req: any, res: Response) => {
       message: error.message,
     });
   }
+};
+
+
+export const searchDuplicatesController = async (req: any, res: Response) => {
+  const { name } = req.query;
+  const orgId = req.user.orgId;
+
+  const existing = await prisma.company.findMany({
+    where: { orgId },
+    select: { id: true, name: true }
+  });
+
+  const potentialDuplicates = detectPotentialDuplicates(name as string, existing);
+
+  res.status(200).json({
+    status: "success",
+    suggestions: potentialDuplicates.map(c => c.item.name)
+  });
 };
