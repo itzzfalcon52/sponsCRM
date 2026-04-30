@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Pencil, Trash2, UserPlus, MoreVertical, Phone, ExternalLink, ChevronLeft, ChevronRight, CheckSquare, Mail, Calendar,Clock, CalendarCheck } from "lucide-react";
+import { Pencil, Trash2, UserPlus, MoreVertical, Phone, ExternalLink, ChevronLeft, ChevronRight, CheckSquare, Mail, Calendar,} from "lucide-react";
 import AssignModal from "./AssignModal";
 import EditCompanyModal from "./EditCompanyModal";
 import { getStatusColor } from "./CompanyTableUtils";
