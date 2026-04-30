@@ -5,6 +5,9 @@ import EditCompanyModal from "./EditCompanyModal";
 import { getStatusColor } from "./CompanyTableUtils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import ActivityModal from "../activity/activityModal";
+import TimelineModal from "../activity/TimelineModal";
+import { CalendarCheck, Clock } from "lucide-react";
 
 export default function CompanyTable({ 
   companies = [], 
@@ -26,6 +29,14 @@ export default function CompanyTable({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const totalPages = Math.ceil(companies.length / itemsPerPage);
+
+
+  //states for activity and timeline
+  const [activityOpen, setActivityOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
+
+  const [timelineOpen, setTimelineOpen] = useState(false);
+  const [selectedTimelineCompany, setSelectedTimelineCompany] = useState<any>(null);
   
   const paginatedCompanies = companies.slice(
     (currentPage - 1) * itemsPerPage, 
@@ -66,6 +77,28 @@ export default function CompanyTable({
   const handleToggleBulkMode = () => {
     setIsBulkMode(!isBulkMode);
     setSelectedIds([]);
+  };
+
+  const handleAddActivity = (company: any) => {
+    setSelectedCompany(company);
+    setActivityOpen(true);
+    setOpenDropdownId(null);
+  };
+  
+  const handleViewTimeline = (company: any) => {
+    setSelectedTimelineCompany(company);
+    setTimelineOpen(true);
+    setOpenDropdownId(null);
+  };
+
+  const getLatestActivity = (activities: any[]) => {
+    if (!activities || !Array.isArray(activities) || activities.length === 0) return null;
+  
+    const sorted = [...activities].sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  
+    return sorted[0].type;
   };
 
   // SKELETON LOADER
@@ -171,6 +204,7 @@ export default function CompanyTable({
               <th className="px-6 py-4 font-semibold text-xs tracking-wider uppercase whitespace-nowrap">Contact Info</th>
               <th className="px-6 py-4 font-semibold text-xs tracking-wider uppercase whitespace-nowrap">Domain</th>
               <th className="px-6 py-4 font-semibold text-xs tracking-wider uppercase whitespace-nowrap">Status</th>
+              <th className="px-6 py-4 font-semibold text-xs tracking-wider uppercase whitespace-nowrap"> Activity</th>
               <th className="px-6 py-4 font-semibold text-xs tracking-wider uppercase whitespace-nowrap">Assigned To</th>
               <th className="px-6 py-4 font-semibold text-xs tracking-wider uppercase whitespace-nowrap">Last Contacted</th>
               <th className="px-6 py-4 font-semibold text-xs tracking-wider uppercase text-right whitespace-nowrap">Actions</th>
@@ -269,6 +303,17 @@ export default function CompanyTable({
                     </span>
                   </td>
 
+                  {/* Latest Activity */}
+                  <td className="px-6 py-4">
+                    {getLatestActivity(c.activities) ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-700">
+                        <CalendarCheck className="h-4 w-4 text-green-500" />
+                        {getLatestActivity(c.activities)}
+                      </span>
+                    ) : (
+                      <span className="text-slate-300 text-xs font-medium italic">No Activity</span>
+                    )}
+
                   {/* Assigned Member */}
                   <td className="px-6 py-4">
                     {c.assignedTo?.name ? (
@@ -331,13 +376,27 @@ export default function CompanyTable({
                         >
                           <UserPlus className="h-4 w-4 text-slate-400" /> Assign
                         </button>
-                        <div className="h-px bg-slate-100 my-1"></div>
+                        <button 
+                          onClick={() => handleAddActivity(c)}
+                          className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+
+                          <CalendarCheck className="h-4 w-4 text-slate-400" /> Add Activity
+                        </button>
+                        <button 
+                          onClick={() => handleViewTimeline(c)}
+                          className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+
+                          <Clock className="h-4 w-4 text-slate-400" /> View Timeline
+                        </button>
+
+                        <div className="border-t border-slate-100 my-1"></div>
                         <button 
                           onClick={() => handleAction(c, 'delete')}
-                          className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                        >
-                          <Trash2 className="h-4 w-4" /> Delete
-                        </button>
+                          className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                          <Trash2 className="h-4 w-4 text-red-400" /> Delete
+                          </button>
+                        
+                  
                       </div>
                     )}
                   </td>
@@ -407,6 +466,18 @@ export default function CompanyTable({
         }} 
       />
       <EditCompanyModal open={editOpen} company={selected} onClose={() => setEditOpen(false)} />
+
+      <ActivityModal
+     open={activityOpen}
+     onClose={() => setActivityOpen(false)}
+      company={selectedCompany}
+     />
+
+    <TimelineModal
+     open={timelineOpen}
+     onClose={() => setTimelineOpen(false)}
+     company={selectedTimelineCompany}
+    />
     </div>
   );
 }
