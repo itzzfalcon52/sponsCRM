@@ -101,6 +101,35 @@ export default function CompanyTable({
     return sorted[0].type;
   };
 
+  const renderActivityPill = (type: string) => {
+    switch (type) {
+      case "CALL":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+            <Phone className="h-3 w-3" /> Call
+          </span>
+        );
+      case "EMAIL":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold tracking-wide bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+            <Mail className="h-3 w-3" /> Email
+          </span>
+        );
+      case "MEETING":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold tracking-wide bg-indigo-50 text-indigo-700 border border-indigo-200 whitespace-nowrap">
+            <Calendar className="h-3 w-3" /> Meeting
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold tracking-wide bg-slate-50 text-slate-700 border border-slate-200 whitespace-nowrap">
+            {type}
+          </span>
+        );
+    }
+  };
+
   // SKELETON LOADER
   const TableSkeleton = () => (
     <>
@@ -305,14 +334,14 @@ export default function CompanyTable({
 
                   {/* Latest Activity */}
                   <td className="px-6 py-4">
-                    {getLatestActivity(c.activities) ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-700">
-                        <CalendarCheck className="h-4 w-4 text-green-500" />
-                        {getLatestActivity(c.activities)}
-                      </span>
-                    ) : (
-                      <span className="text-slate-300 text-xs font-medium italic">No Activity</span>
-                    )}
+  {getLatestActivity(c.activities) ? (
+     renderActivityPill(getLatestActivity(c.activities))
+  ) : (
+    <span className="text-slate-300 text-xs font-medium italic">
+      No Activity
+    </span>
+  )}
+</td>
 
                   {/* Assigned Member */}
                   <td className="px-6 py-4">
