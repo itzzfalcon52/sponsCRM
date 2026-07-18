@@ -64,7 +64,7 @@ export const googleCallback = async (req:any, res:any) => {
     });
 
     // redirect back to frontend
-    res.redirect("http://localhost:5173/companies");
+    res.redirect("https://www.sponscrm.tech/companies");
 
   } catch (err) {
     console.error("Google Callback Error:", err);
