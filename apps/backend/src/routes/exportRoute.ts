@@ -8,7 +8,7 @@ const router = express.Router();
 router.get("/connect", protect,restrictTo("ADMIN"), connectGoogle);
 
 // 2. Google redirects here (NO protect )
-router.get("/callback",restrictTo("ADMIN"), googleCallback);
+router.get("/callback", googleCallback);
 
 // 3. Sync data
 router.post("/sync", protect ,restrictTo("ADMIN"), syncSheets);
