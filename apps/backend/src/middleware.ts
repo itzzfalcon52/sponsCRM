@@ -22,7 +22,12 @@ export const protect = async (req: any, res: Response, next: any) => {
     }
   
     if (!token) {
-      return res.status(401).json({ status: "Unauthorized" });
+      console.log("PROTECT: NO TOKEN");
+
+     return res.status(401).json({
+      status: "Unauthorized",
+      message: "No authentication token",
+     });
     }
   
     try {
@@ -34,6 +39,10 @@ export const protect = async (req: any, res: Response, next: any) => {
         role: string;
         orgId: string | null;
       };
+
+      console.log("PROTECT: JWT VALID", decoded.userId);
+
+      const dbStart = Date.now(); //for testing 
   
       // 2. Verify user still exists 
       const currentUser = await prisma.user.findUnique({
@@ -44,6 +53,10 @@ export const protect = async (req: any, res: Response, next: any) => {
           orgId: true,
         },
       });
+
+      console.log(
+        `protect → user.findUnique: ${Date.now() - dbStart}ms`
+      );
 
       /*
       User logs in
@@ -64,8 +77,20 @@ export const protect = async (req: any, res: Response, next: any) => {
       req.auth = decoded;
   
       next();
-    } catch {
-      return res.status(401).json({ status: "Invalid token" });
+    } catch (error:any) {
+      console.error(
+        "PROTECT JWT ERROR:",
+        error.name,
+        error.message
+      );
+    
+      return res.status(401).json({
+        status: "Unauthorized",
+        message:
+          error.name === "TokenExpiredError"
+            ? "Token expired"
+            : "Invalid token",
+      });
     }
   };
 
@@ -100,11 +125,17 @@ export const validate = (schema: any) => {   //ZOD MIDDLEWARE
         message: "Join or create an organization first",
       });
     }
+
+    const dbStart = Date.now();
   
     const org = await prisma.organization.findUnique({
       where: { id: req.user.orgId },
       select: { id: true },
     });
+
+    console.log(
+      `requireOrg → organization.findUnique: ${Date.now() - dbStart}ms`
+    );
   
     if (!org) {
       return res.status(403).json({
