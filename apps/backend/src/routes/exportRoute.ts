@@ -4,15 +4,15 @@ import { protect,restrictTo,userRateLimiter} from "../middleware.js";
 
 const router = express.Router();
 
-router.use(userRateLimiter);
+
 
 // 1. Start OAuth
-router.get("/connect", protect,restrictTo("ADMIN"), connectGoogle);
+router.get("/connect", protect,userRateLimiter,restrictTo("ADMIN"), connectGoogle);
 
 // 2. Google redirects here (NO protect )
 router.get("/callback", googleCallback);
 
 // 3. Sync data
-router.post("/sync", protect ,restrictTo("ADMIN"), syncSheets);
+router.post("/sync", protect ,userRateLimiter,restrictTo("ADMIN"), syncSheets);
 
 export default router;
