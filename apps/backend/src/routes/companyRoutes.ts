@@ -16,6 +16,7 @@ import {
   restrictTo,
   requireOrg,
   validate,
+  userRateLimiter,
 } from "../middleware.js";
 
 import {
@@ -30,6 +31,7 @@ const router = express.Router();
 ================================ */
 
 router.use(protect);
+router.use(userRateLimiter);
 router.use(requireOrg);
 
 /* ================================
@@ -91,6 +93,6 @@ router.delete(
 );
 
 
-router.get("/search/duplicates", protect, searchDuplicatesController);
+router.get("/search/duplicates", searchDuplicatesController);
 
 export default router;

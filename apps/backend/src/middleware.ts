@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import type { Response } from "express";
 import type { User } from "../generated/prisma/client.js";
 import dotenv from "dotenv";
+import rateLimit from "express-rate-limit";
 
 
 export const protect = async (req: any, res: Response, next: any) => {
@@ -34,7 +35,7 @@ export const protect = async (req: any, res: Response, next: any) => {
         orgId: string | null;
       };
   
-      // 2. Verify user still exists (CRITICAL)
+      // 2. Verify user still exists 
       const currentUser = await prisma.user.findUnique({
         where: { id: decoded.userId },
         select: {
@@ -43,6 +44,16 @@ export const protect = async (req: any, res: Response, next: any) => {
           orgId: true,
         },
       });
+
+      /*
+      User logs in
+        ↓
+      JWT issued
+       ↓
+      Admin deletes that user
+       ↓
+      User still has old JWT
+      */
   
       if (!currentUser) {
         return res.status(401).json({ status: "User no longer exists" });
@@ -104,3 +115,22 @@ export const validate = (schema: any) => {   //ZOD MIDDLEWARE
   
     next();
   };
+
+
+  export const userRateLimiter = rateLimit({ 
+    //We also add user-based rate limiting
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+  
+    keyGenerator: (req: any) => {
+      return req.user.id;
+    }, //this is basically the key based on which the rate limiter works,the key we use is user id 
+  
+    standardHeaders: true,
+    legacyHeaders: false,
+  
+    message: {
+      status: "fail",
+      message: "Too many requests. Please try again later.",
+    },
+  });

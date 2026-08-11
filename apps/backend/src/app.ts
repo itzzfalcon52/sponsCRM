@@ -29,6 +29,20 @@ const allowedOrigins = [
   "https://spons-crm-frontend.vercel.app", // Removed slash
 ];
 
+app.use((req, res, next) => {
+  const start = Date.now();
+
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+
+    console.log(
+      `${req.method} ${req.originalUrl} → ${res.statusCode} (${duration}ms)`
+    );
+  });
+
+  next();
+});
+
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -46,18 +60,11 @@ app.use(helmet());
 
 app.set("trust proxy", 1); //we add this as this will set the ip as fixed and not change on reload.This is important for rate limiting on cloud hosting platforms
 
-// 2. Limit requests from the same IP (Rate Limiting)
-const limiter = rateLimit({
-  max: 100, // Limit each IP to 100 requests per `windowMs`
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  message: "Too many requests from this IP, please try again in 15 minutes!",
-});
-// Apply the rate limiting middleware to all /api routes
-app.use("/api", limiter);
+//We removed the global rate limiter as it was causing issues with the frontend. Instead, we will apply a stricter rate limiter specifically for the auth routes and also added a user-based rate limiter for the other routes. This way, we can prevent brute force attacks on the auth routes while still allowing legitimate users to access the other routes without being blocked by a global rate limit.
 
 // Strict limiter for Auth routes
 const authLimiter = rateLimit({
-  max: 50, // Limit to 10 requests per window
+  max: 100, // Limit to 10 requests per window
   windowMs: 10 * 60 * 1000, // 10 minutes
   message: "Too many login attempts, please try again after 10 minutes",
 });
