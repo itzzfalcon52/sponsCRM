@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { useAuthStore } from "../../stores/authstore";
 import { Link, useNavigate } from "react-router-dom";
-import { api } from "../../api/axios"; 
-import { 
+import { api } from "../../api/axios";
+
+import {
   Building2,
-  Copy, 
-  CheckCircle2, 
+  Copy,
+  CheckCircle2,
   LogOut,
   User as UserIcon,
   Loader2,
   ChevronDown,
-  Bell,
-  Sparkles
+  Sun,
+  Moon,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,22 +25,48 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import NotificationTray from "../activity/NotificationTray";
 
 export default function Topbar() {
   const [copied, setCopied] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
   const isAdmin = user?.role === "ADMIN";
   const inviteCode = user?.organization?.inviteCode;
 
-  // PRESERVED LOGOUT LOGIC
+  // ============================================================
+  // THEME
+  // ============================================================
+
+  const [isDark, setIsDark] = useState(() => {
+    return document.documentElement.classList.contains("dark");
+  });
+
+  const toggleTheme = () => {
+    const root = document.documentElement;
+
+    root.classList.toggle("dark");
+
+    const dark = root.classList.contains("dark");
+
+    setIsDark(dark);
+
+    localStorage.setItem("theme", dark ? "dark" : "light");
+  };
+
+  // ============================================================
+  // LOGOUT
+  // ============================================================
+
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      await api.post("/auth/logout"); 
+
+      await api.post("/auth/logout");
     } catch (error) {
       console.error("Logout failed", error);
     } finally {
@@ -47,112 +76,453 @@ export default function Topbar() {
     }
   };
 
+  // ============================================================
+  // COPY INVITE CODE
+  // ============================================================
+
   const handleCopyInvite = () => {
-    if (inviteCode) {
-      navigator.clipboard.writeText(inviteCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    if (!inviteCode) return;
+
+    navigator.clipboard.writeText(inviteCode);
+
+    setCopied(true);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
   };
 
   return (
-    <header className="h-16 w-full bg-white/70 backdrop-blur-xl border-b border-slate-200/50 flex items-center justify-between px-8 sticky top-0 z-[49]">
-      
-      {/* Left: Organization Context */}
+    <header
+      className="
+        sticky top-0 z-[49]
+        flex h-16 w-full
+        items-center justify-between
+        border-b border-border
+        bg-background/80
+        px-8
+        backdrop-blur-xl
+        transition-colors
+      "
+    >
+      {/* ========================================================
+          LEFT — ORGANIZATION
+      ======================================================== */}
+
       <div className="flex items-center gap-4">
         {user?.organization?.name ? (
-          <div className="group flex items-center gap-3 px-3 py-1.5 bg-white border border-slate-200 rounded-2xl transition-all hover:border-indigo-200 hover:shadow-sm">
-            <div className="h-8 w-8 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100 group-hover:rotate-3 transition-transform">
+          <div
+            className="
+              group flex items-center gap-3
+              rounded-2xl
+              border border-border
+              bg-card
+              px-3 py-1.5
+              shadow-sm
+              transition-all
+              hover:border-indigo-300
+              hover:shadow-md
+              dark:hover:border-indigo-800
+            "
+          >
+            {/* Organization Icon */}
+
+            <div
+              className="
+                flex h-8 w-8
+                items-center justify-center
+                rounded-xl
+                bg-indigo-600
+                shadow-lg shadow-indigo-500/20
+                transition-transform
+                group-hover:rotate-3
+              "
+            >
               <Building2 className="h-4 w-4 text-white" />
             </div>
+
+            {/* Organization Name */}
+
             <div className="flex flex-col">
-              <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest leading-none mb-1">Workspace</span>
-              <span className="font-bold text-sm text-slate-800 leading-none">
+              <span
+                className="
+                  mb-1 text-[9px]
+                  font-black uppercase
+                  tracking-widest
+                  leading-none
+                  text-indigo-500
+                  dark:text-indigo-400
+                "
+              >
+                Workspace
+              </span>
+
+              <span
+                className="
+                  max-w-[220px]
+                  truncate
+                  text-sm
+                  font-bold
+                  leading-none
+                  text-foreground
+                "
+              >
                 {user.organization.name}
               </span>
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-slate-400">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />
-            <span className="text-[10px] font-black uppercase tracking-widest animate-pulse">Initializing...</span>
+
+            <span className="animate-pulse text-[10px] font-black uppercase tracking-widest">
+              Initializing...
+            </span>
           </div>
         )}
       </div>
 
-      {/* Right Controls Section */}
-      <div className="flex items-center gap-3">
-        
-        {/* Invite Code - Pill Design */}
+      {/* ========================================================
+          RIGHT CONTROLS
+      ======================================================== */}
+
+      <div className="flex items-center gap-2">
+        {/* ======================================================
+            INVITE CODE
+        ====================================================== */}
+
         {user?.organization && isAdmin && inviteCode && (
-          <div className="hidden lg:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full pl-4 pr-1 py-1 shadow-inner group transition-colors hover:bg-white hover:border-indigo-100">
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Invite:</span>
-            <span className="font-mono text-xs font-bold text-slate-600">{inviteCode}</span>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleCopyInvite}
-              className="h-7 w-7 rounded-full hover:bg-white text-slate-400 hover:text-indigo-600"
+          <div
+            className="
+              hidden items-center gap-2
+              rounded-full
+              border border-border
+              bg-muted/50
+              pl-4 pr-1 py-1
+              shadow-inner
+              transition-colors
+              hover:bg-card
+              hover:border-indigo-200
+              dark:hover:border-indigo-900
+              lg:flex
+            "
+          >
+            <span
+              className="
+                text-[9px]
+                font-black
+                uppercase
+                tracking-widest
+                text-muted-foreground
+              "
             >
-              {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+              Invite:
+            </span>
+
+            <span
+              className="
+                font-mono
+                text-xs
+                font-bold
+                text-foreground
+              "
+            >
+              {inviteCode}
+            </span>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCopyInvite}
+              className="
+                h-7 w-7
+                rounded-full
+                text-muted-foreground
+                hover:bg-background
+                hover:text-indigo-600
+                dark:hover:text-indigo-400
+              "
+            >
+              {copied ? (
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
             </Button>
           </div>
         )}
 
-        <div className="h-6 w-px bg-slate-200/60 mx-1"></div>
+        {/* Divider */}
 
-        {/* Action Logic Component */}
+        <div className="mx-1 h-6 w-px bg-border" />
+
+        {/* ======================================================
+            THEME TOGGLE
+        ====================================================== */}
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          className="
+            relative
+            h-9 w-9
+            rounded-full
+            border border-transparent
+            text-muted-foreground
+            transition-all
+            hover:border-border
+            hover:bg-muted
+            hover:text-foreground
+            active:scale-90
+          "
+          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          aria-label={
+            isDark ? "Switch to light mode" : "Switch to dark mode"
+          }
+        >
+          {isDark ? (
+            <Sun className="h-4 w-4 transition-transform duration-300" />
+          ) : (
+            <Moon className="h-4 w-4 transition-transform duration-300" />
+          )}
+        </Button>
+
+        {/* ======================================================
+            NOTIFICATIONS
+        ====================================================== */}
+
         <NotificationTray />
 
-        {/* User Profile Dropdown */}
+        {/* ======================================================
+            USER DROPDOWN
+        ====================================================== */}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2.5 p-1 rounded-full hover:bg-slate-50 transition-all focus:outline-none group">
-              <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-slate-200 group-hover:scale-105 transition-transform">
-                {user?.name ? user.name.charAt(0).toUpperCase() : <UserIcon className="h-4 w-4" />}
+            <button
+              className="
+                group flex items-center gap-2.5
+                rounded-full
+                p-1
+                outline-none
+                transition-all
+                hover:bg-muted
+              "
+            >
+              {/* Avatar */}
+
+              <div
+                className="
+                  flex h-9 w-9
+                  items-center justify-center
+                  rounded-2xl
+                  bg-gradient-to-br
+                  from-slate-800
+                  to-slate-950
+                  text-sm
+                  font-bold
+                  text-white
+                  shadow-lg
+                  shadow-slate-500/10
+                  transition-transform
+                  group-hover:scale-105
+                  dark:from-slate-600
+                  dark:to-slate-900
+                "
+              >
+                {user?.name ? (
+                  user.name.charAt(0).toUpperCase()
+                ) : (
+                  <UserIcon className="h-4 w-4" />
+                )}
               </div>
-              <div className="hidden sm:flex flex-col items-start mr-1">
-                <span className="text-xs font-bold text-slate-900 leading-none">{user?.name?.split(' ')[0]}</span>
-                <span className="text-[9px] font-black text-indigo-500 uppercase tracking-tighter">Pro</span>
+
+              {/* Name */}
+
+              <div className="mr-1 hidden flex-col items-start sm:flex">
+                <span
+                  className="
+                    text-xs
+                    font-bold
+                    leading-none
+                    text-foreground
+                  "
+                >
+                  {user?.name?.split(" ")[0] || "User"}
+                </span>
+
+                <span
+                  className="
+                    mt-1
+                    text-[9px]
+                    font-black
+                    uppercase
+                    tracking-tighter
+                    text-indigo-500
+                    dark:text-indigo-400
+                  "
+                >
+                  {user?.role || "Member"}
+                </span>
               </div>
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+
+              <ChevronDown
+                className="
+                  h-3.5 w-3.5
+                  text-muted-foreground
+                  transition-colors
+                  group-hover:text-foreground
+                "
+              />
             </button>
           </DropdownMenuTrigger>
-          
-          <DropdownMenuContent className="w-64 mt-2 p-0 border-slate-200/60 shadow-2xl rounded-2xl overflow-hidden" align="end">
-            <DropdownMenuLabel className="font-normal p-4 bg-slate-50/50">
+
+          {/* ====================================================
+              DROPDOWN
+          ==================================================== */}
+
+          <DropdownMenuContent
+            align="end"
+            className="
+              mt-2
+              w-64
+              overflow-hidden
+              rounded-2xl
+              border-border
+              bg-popover
+              p-0
+              shadow-2xl
+            "
+          >
+            {/* User Information */}
+
+            <DropdownMenuLabel
+              className="
+                bg-muted/40
+                p-4
+                font-normal
+              "
+            >
               <div className="flex flex-col space-y-2">
-                <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-slate-900">{user?.name || "Member"}</p>
-                    <span className="text-[8px] font-black uppercase px-1.5 py-0.5 bg-indigo-600 text-white rounded-md">
-                        {user?.role}
-                    </span>
+                <div className="flex items-center justify-between gap-3">
+                  <p
+                    className="
+                      truncate
+                      text-sm
+                      font-bold
+                      text-popover-foreground
+                    "
+                  >
+                    {user?.name || "Member"}
+                  </p>
+
+                  <span
+                    className="
+                      shrink-0
+                      rounded-md
+                      bg-indigo-600
+                      px-1.5 py-0.5
+                      text-[8px]
+                      font-black
+                      uppercase
+                      text-white
+                    "
+                  >
+                    {user?.role}
+                  </span>
                 </div>
-                <p className="text-xs text-slate-400 truncate font-medium">{user?.email}</p>
+
+                <p
+                  className="
+                    truncate
+                    text-xs
+                    font-medium
+                    text-muted-foreground
+                  "
+                >
+                  {user?.email}
+                </p>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="m-0" />
+
+            <DropdownMenuSeparator className="m-0 bg-border" />
+
+            {/* Account */}
+
             <div className="p-1.5">
-              <DropdownMenuItem asChild className="p-2.5 cursor-pointer rounded-xl focus:bg-indigo-50 group">
-                <Link to="/profile" className="flex items-center w-full">
-                  <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center mr-3 group-hover:bg-white transition-colors">
-                    <UserIcon className="h-4 w-4 text-slate-400 group-hover:text-indigo-600" />
+              <DropdownMenuItem
+                asChild
+                className="
+                  cursor-pointer
+                  rounded-xl
+                  p-2.5
+                  focus:bg-accent
+                "
+              >
+                <Link
+                  to="/profile"
+                  className="flex w-full items-center"
+                >
+                  <div
+                    className="
+                      mr-3
+                      flex h-8 w-8
+                      items-center justify-center
+                      rounded-lg
+                      bg-muted
+                      transition-colors
+                      group-hover:bg-background
+                    "
+                  >
+                    <UserIcon
+                      className="
+                        h-4 w-4
+                        text-muted-foreground
+                        group-hover:text-indigo-600
+                        dark:group-hover:text-indigo-400
+                      "
+                    />
                   </div>
-                  <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900">Account Settings</span>
+
+                  <span
+                    className="
+                      text-sm
+                      font-bold
+                      text-muted-foreground
+                    "
+                  >
+                    Account Settings
+                  </span>
                 </Link>
               </DropdownMenuItem>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Standalone Logout Button */}
-        <Button 
-          variant="ghost" 
+        {/* ======================================================
+            LOGOUT
+        ====================================================== */}
+
+        <Button
+          variant="ghost"
           size="icon"
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="h-9 w-9 text-slate-400 hover:text-rose-600 hover:bg-rose-50 ml-1 transition-all rounded-full active:scale-90"
+          className="
+            ml-1
+            h-9 w-9
+            rounded-full
+            text-muted-foreground
+            transition-all
+            hover:bg-rose-50
+            hover:text-rose-600
+            active:scale-90
+            dark:hover:bg-rose-950/40
+            dark:hover:text-rose-400
+          "
           title="Sign Out"
+          aria-label="Sign Out"
         >
           {isLoggingOut ? (
             <Loader2 className="h-4 w-4 animate-spin" />

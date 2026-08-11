@@ -2,7 +2,6 @@ import { useCompanies } from "../../hooks/useCompany";
 import { useOrg } from "../../hooks/useOrg";
 import { 
   Building2, 
-  IndianRupee, 
   Gift, 
   TrendingUp, 
   CheckCircle2, 

@@ -3,13 +3,12 @@ import { useAuthStore } from "../stores/authstore";
 import { useOrg } from "../hooks/useOrg"; 
 import { 
   Building2, 
-  Users, 
+ 
   Key, 
-  Copy, 
-  CheckCircle2, 
+ 
+  
   Plus, 
-  ShieldAlert,
-  Loader2
+ 
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,15 +21,14 @@ export default function Org() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const { 
-    orgMembers, 
-    isOrgMembersLoading, 
+   
     createOrg, 
     joinOrg
   } = useOrg();
 
   const [createName, setCreateName] = useState("");
   const [joinCode, setJoinCode] = useState("");
-  const [copied, setCopied] = useState(false);
+  
 
   const hasOrg = !!user?.organization;
 
@@ -72,16 +70,7 @@ export default function Org() {
     });
   };
 
-  const handleCopyInviteCode = () => {
-    const inviteCode = (user?.organization as any)?.inviteCode;
-    if (inviteCode) {
-      navigator.clipboard.writeText(inviteCode);
-      setCopied(true);
-      toast.success("Invite code copied to clipboard!");
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
+  
  
   // View : User is NOT in an Organization
   return (

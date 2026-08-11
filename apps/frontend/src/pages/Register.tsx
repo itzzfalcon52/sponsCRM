@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "../stores/authstore";
 
 export default function Register() {
-  const { signUp, signUpLoading } = useAuth();
+  const { signUp, isSigningUp } = useAuth();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
@@ -20,7 +20,7 @@ export default function Register() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (signUpLoading) return;
+    if (isSigningUp) return;
 
     if (password !== confirmPassword) {
       toast.error("Passwords do not match", {
@@ -199,8 +199,8 @@ export default function Register() {
               </div>
             </div>
 
-            <Button type="submit" disabled={signUpLoading} className="w-full">
-              {signUpLoading ? (
+            <Button type="submit" disabled={isSigningUp} className="w-full">
+              {isSigningUp ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <>

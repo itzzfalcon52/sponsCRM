@@ -1,85 +1,250 @@
-import { Calendar, Clock, AlertCircle, Building2, User } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  AlertCircle,
+  Building2,
+  User,
+} from "lucide-react";
 
 function CompanyCard({ company }: { company: any }) {
-  const followUp = company.nextFollowUp ? new Date(company.nextFollowUp) : null;
+  const followUp = company.nextFollowUp
+    ? new Date(company.nextFollowUp)
+    : null;
+
   const today = new Date();
 
-  let statusConfig = {
-    color: "text-slate-500 bg-slate-50 border-slate-200",
-    icon: <Calendar className="h-3 w-3" />,
-    label: "No follow-up"
+  // Normalize dates to midnight so time-of-day doesn't
+  // incorrectly affect overdue/today calculations.
+  const normalizeDate = (date: Date) => {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
   };
 
-  if (followUp) {
-    const isOverdue = followUp < today && followUp.toDateString() !== today.toDateString();
-    const isToday = followUp.toDateString() === today.toDateString();
+  const normalizedToday = normalizeDate(today);
 
-    if (isOverdue) {
+  const normalizedFollowUp = followUp
+    ? normalizeDate(followUp)
+    : null;
+
+  let statusConfig = {
+    color: "text-muted-foreground bg-muted/60 border-border",
+    icon: <Calendar className="h-3 w-3" />,
+    label: "No follow-up",
+  };
+
+  if (normalizedFollowUp) {
+    const diffTime =
+      normalizedFollowUp.getTime() -
+      normalizedToday.getTime();
+
+    const diffDays =
+      diffTime / (1000 * 60 * 60 * 24);
+
+    // Overdue
+    if (diffDays < 0) {
       statusConfig = {
-        color: "text-rose-700 bg-rose-50 border-rose-200",
+        color:
+          "text-rose-700 bg-rose-50 border-rose-200 " +
+          "dark:text-rose-400 dark:bg-rose-950/30 dark:border-rose-900/60",
         icon: <AlertCircle className="h-3 w-3" />,
-        label: `Overdue • ${followUp.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
+        label: `Overdue • ${normalizedFollowUp.toLocaleDateString(
+          undefined,
+          {
+            month: "short",
+            day: "numeric",
+          }
+        )}`,
       };
-    } else if (isToday) {
+    }
+
+    // Due today
+    else if (diffDays === 0) {
       statusConfig = {
-        color: "text-amber-700 bg-amber-50 border-amber-200",
+        color:
+          "text-amber-700 bg-amber-50 border-amber-200 " +
+          "dark:text-amber-400 dark:bg-amber-950/30 dark:border-amber-900/60",
         icon: <Clock className="h-3 w-3" />,
-        label: "Due Today"
+        label: "Due Today",
       };
-    } else {
+    }
+
+    // Upcoming
+    else {
       statusConfig = {
-        color: "text-emerald-700 bg-emerald-50 border-emerald-200",
+        color:
+          "text-emerald-700 bg-emerald-50 border-emerald-200 " +
+          "dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-900/60",
         icon: <Calendar className="h-3 w-3" />,
-        label: followUp.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        label: normalizedFollowUp.toLocaleDateString(
+          undefined,
+          {
+            month: "short",
+            day: "numeric",
+          }
+        ),
       };
     }
   }
 
-  const assigneeName = company.assignedTo?.name || "Unassigned";
-  const assigneeInitials = assigneeName.charAt(0).toUpperCase();
+  const assigneeName =
+    company.assignedTo?.name || "Unassigned";
+
+  const assigneeInitials = assigneeName
+    .charAt(0)
+    .toUpperCase();
 
   return (
-    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all group relative">
-      
-      <div className="flex justify-between items-start gap-2">
+    <div
+      className="
+        group
+        relative
+        rounded-xl
+        border
+        border-border
+        bg-card
+        p-4
+        shadow-sm
+        transition-all
+        duration-200
+        hover:border-indigo-300
+        hover:shadow-md
+        dark:hover:border-indigo-500/50
+        dark:hover:shadow-indigo-950/20
+      "
+    >
+      {/* Company Header */}
+      <div className="flex items-start justify-between gap-2">
         {/* Company Info */}
         <div className="min-w-0 flex-1">
-          <h4 className="font-semibold text-sm text-slate-900 truncate flex items-center gap-1.5">
+          <h4
+            className="
+              flex
+              items-center
+              gap-1.5
+              truncate
+              text-sm
+              font-semibold
+              text-foreground
+            "
+          >
             {company.name}
           </h4>
-          <p className="text-[11px] font-medium text-slate-500 mt-1 truncate flex items-center gap-1">
-             <Building2 className="h-3 w-3 text-slate-400" />
-             {company.industry || "No industry"}
+
+          <p
+            className="
+              mt-1
+              flex
+              items-center
+              gap-1
+              truncate
+              text-[11px]
+              font-medium
+              text-muted-foreground
+            "
+          >
+            <Building2
+              className="
+                h-3
+                w-3
+                shrink-0
+                text-muted-foreground/70
+              "
+            />
+
+            {company.industry || "No industry"}
           </p>
         </div>
 
-        {/* Assignee Avatar */}
-        <div 
-          className="shrink-0 h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600 ring-2 ring-white shadow-sm tooltip-trigger" 
+        {/* Assignee */}
+        <div
+          className="
+            flex
+            h-7
+            w-7
+            shrink-0
+            items-center
+            justify-center
+            rounded-full
+            bg-muted
+            text-[10px]
+            font-bold
+            text-muted-foreground
+            ring-2
+            ring-card
+            shadow-sm
+            transition-transform
+            duration-200
+            group-hover:scale-105
+          "
           title={`Assigned to: ${assigneeName}`}
         >
-          {company.assignedTo ? assigneeInitials : <User className="h-3 w-3 text-slate-400" />}
+          {company.assignedTo ? (
+            assigneeInitials
+          ) : (
+            <User
+              className="
+                h-3.5
+                w-3.5
+                text-muted-foreground/70
+              "
+            />
+          )}
         </div>
       </div>
 
       {/* Divider */}
-      <div className="h-px w-full bg-slate-100 my-3 hidden group-hover:block transition-all"></div>
+      <div
+        className="
+          my-3
+          h-px
+          w-full
+          bg-border
+          opacity-60
+        "
+      />
 
-      {/* Footer / Actions */}
-      <div className="mt-4 flex items-center justify-between mt-auto">
-        
-        {/* Follow-up Badge */}
+      {/* Footer */}
+      <div className="mt-auto flex items-center justify-between">
+        {/* Follow-up */}
         {followUp ? (
-           <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border text-[10px] font-semibold ${statusConfig.color}`}>
-             {statusConfig.icon}
-             <span>{statusConfig.label}</span>
-           </div>
-        ) : (
-           <div className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
-             <Calendar className="h-3 w-3" /> No follow-up
-           </div>
-        )}
+          <div
+            className={`
+              flex
+              items-center
+              gap-1.5
+              rounded-md
+              border
+              px-2
+              py-1
+              text-[10px]
+              font-semibold
+              transition-colors
+              ${statusConfig.color}
+            `}
+          >
+            {statusConfig.icon}
 
+            <span className="truncate">
+              {statusConfig.label}
+            </span>
+          </div>
+        ) : (
+          <div
+            className="
+              flex
+              items-center
+              gap-1
+              text-[10px]
+              font-medium
+              text-muted-foreground
+            "
+          >
+            <Calendar className="h-3 w-3" />
+
+            No follow-up
+          </div>
+        )}
       </div>
     </div>
   );

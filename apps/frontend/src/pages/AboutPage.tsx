@@ -3,8 +3,7 @@ import {
     Target, 
     Heart, 
     Zap, 
-    ExternalLink, // Replaced Linkedin
-    Share2,       // Replaced Twitter
+    ExternalLink, // Replaced Linkedin      // Replaced Twitter
     Globe,
     Mail
   } from "lucide-react";

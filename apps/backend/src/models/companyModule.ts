@@ -238,46 +238,92 @@ export const getMyCompanies = async (
   orgId: string,
   input: Partial<ListCompaniesInput> = {}
 ) => {
-  // Use the same schema, but default to the provided limits
-  const { status, domain, page, limit,q } = listCompaniesSchema.parse(input);
+  const { status, domain, page, limit, q } =
+    listCompaniesSchema.parse(input);
+
   const skip = (page - 1) * limit;
 
-  const whereClause = {
+  const whereClause: Prisma.CompanyWhereInput = {
     orgId,
-    assignedToId: userId,
+
+    // Member sees:
+    // 1. Companies assigned to them
+    // 2. Companies they created
+    OR: [
+      { assignedToId: userId },
+      { createdById: userId },
+    ],
+
     status: status ?? undefined,
     domain: domain ?? undefined,
-    // Add the search logic 
-    OR: q ? [
-      { name: { contains: q, mode: "insensitive" as Prisma.QueryMode } },
-      { contactName: { contains: q, mode: "insensitive" as Prisma.QueryMode } },
-    ] : undefined,
+
+    ...(q
+      ? {
+          AND: [
+            {
+              OR: [
+                {
+                  name: {
+                    contains: q,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  contactName: {
+                    contains: q,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            },
+          ],
+        }
+      : {}),
   };
 
   const [companies, total] = await Promise.all([
     prisma.company.findMany({
       where: whereClause,
+
       include: {
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+
         activities: {
-          orderBy: { createdAt: "desc" },
+          orderBy: {
+            createdAt: "desc",
+          },
           take: 1,
           select: {
             type: true,
-            createdAt: true
-          }
-        }
+            createdAt: true,
+          },
+        },
       },
-      orderBy: { updatedAt: "desc" },
+
+      orderBy: {
+        updatedAt: "desc",
+      },
+
       take: limit,
       skip,
     }),
+
     prisma.company.count({
-      where: {
-        orgId,
-        assignedToId: userId,
-        status: status ?? undefined,
-        domain: domain ?? undefined,
-      },
+      where: whereClause,
     }),
   ]);
 

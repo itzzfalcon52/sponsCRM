@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "../stores/authstore";
 
 export default function Login() {
-  const { login, loginLoading } = useAuth();
+  const { login,  isLoggingIn} = useAuth();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
@@ -18,7 +18,7 @@ export default function Login() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (loginLoading) return;
+    if (isLoggingIn) return;
 
     login(
       { email, password },
@@ -156,8 +156,8 @@ export default function Login() {
               </div>
             </div>
 
-            <Button type="submit" disabled={loginLoading} className="w-full">
-              {loginLoading ? (
+            <Button type="submit" disabled={isLoggingIn} className="w-full">
+              {isLoggingIn? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <>
