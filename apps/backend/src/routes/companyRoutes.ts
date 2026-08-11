@@ -63,6 +63,7 @@ router.patch(
 /* ================================
    SINGLE COMPANY
 ================================ */
+router.get("/search/duplicates", searchDuplicatesController);
 
 router.get("/:id", getCompanyController);
 
@@ -93,6 +94,6 @@ router.delete(
 );
 
 
-router.get("/search/duplicates", searchDuplicatesController);
+
 
 export default router;
