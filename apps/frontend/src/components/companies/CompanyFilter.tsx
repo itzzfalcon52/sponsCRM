@@ -13,6 +13,15 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "../../stores/authstore";
 
+interface CompanyFiltersProps {
+  onChange: (updater: (prev: Record<string, string>) => Record<string, string>) => void;
+  onAdd: () => void;
+  onExport: () => Promise<void>;
+  onConnect: () => Promise<void>;
+  isConnected: boolean;
+  lastSyncedAt?: string | Date | null;
+}
+
 export default function CompanyFilters({
   onChange,
   onAdd,
@@ -20,7 +29,7 @@ export default function CompanyFilters({
   onConnect,
   isConnected,
   lastSyncedAt,
-}: any) {
+}: CompanyFiltersProps) {
   const [loading, setLoading] = useState(false);
 
   const user = useAuthStore((s) => s.user) as any;
@@ -48,8 +57,12 @@ export default function CompanyFilters({
     { value: "MISCELLANEOUS", label: "Miscellaneous" },
   ];
 
+  // ============================================================
+  // FILTER CHANGE
+  // ============================================================
+
   const handleChange = (key: string, value: string) => {
-    onChange((prev: any) => {
+    onChange((prev) => {
       const next = { ...prev };
 
       if (!value) {
@@ -62,37 +75,58 @@ export default function CompanyFilters({
     });
   };
 
+  // ============================================================
+  // GOOGLE SYNC
+  // ============================================================
+
   const handleExportClick = async () => {
     if (!isConnected) {
-      return toast.error("Connect Google first");
+      toast.error("Connect Google first");
+      return;
     }
 
     try {
       setLoading(true);
 
       await onExport();
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(
+        "Failed to sync with Google Sheets:",
+        error
+      );
+
       toast.error("Export to Google Sheets failed");
     } finally {
       setLoading(false);
     }
   };
 
+  // ============================================================
+  // RENDER
+  // ============================================================
+
   return (
     <div className="flex w-full flex-col gap-5 mb-8 xl:flex-row">
 
-      {/* =========================================================
+      {/* ======================================================
           LEFT SIDE — FILTERS
-      ========================================================= */}
+      ====================================================== */}
 
       <div className="flex flex-1 flex-wrap items-center gap-3">
 
-        {/* Search */}
+        {/* ====================================================
+            SEARCH
+        ==================================================== */}
+
         <div className="group relative w-full sm:w-72">
           <Search
             className="
-              absolute left-3 top-1/2 h-4 w-4
+              pointer-events-none
+              absolute
+              left-3
+              top-1/2
+              h-4
+              w-4
               -translate-y-1/2
               text-muted-foreground
               transition-colors
@@ -102,13 +136,18 @@ export default function CompanyFilters({
 
           <input
             placeholder="Search companies, contacts..."
-            onChange={(e) => handleChange("q", e.target.value)}
+            onChange={(e) =>
+              handleChange("q", e.target.value)
+            }
             className="
               w-full
               rounded-lg
-              border border-input
+              border
+              border-input
               bg-background
-              py-2.5 pl-9 pr-4
+              py-2.5
+              pl-9
+              pr-4
               text-sm
               font-medium
               text-foreground
@@ -124,30 +163,42 @@ export default function CompanyFilters({
           />
         </div>
 
-        {/* Status */}
+        {/* ====================================================
+            STATUS
+        ==================================================== */}
+
         <div className="group relative">
           <Filter
             className="
-              absolute left-3 top-1/2 h-4 w-4
+              pointer-events-none
+              absolute
+              left-3
+              top-1/2
+              z-10
+              h-4
+              w-4
               -translate-y-1/2
               text-muted-foreground
               transition-colors
               group-focus-within:text-primary
-              pointer-events-none
-              z-10
             "
           />
 
           <select
             defaultValue=""
-            onChange={(e) => handleChange("status", e.target.value)}
+            onChange={(e) =>
+              handleChange("status", e.target.value)
+            }
             className="
               appearance-none
               cursor-pointer
               rounded-lg
-              border border-input
+              border
+              border-input
               bg-background
-              py-2.5 pl-9 pr-9
+              py-2.5
+              pl-9
+              pr-9
               text-sm
               font-medium
               text-foreground
@@ -158,57 +209,84 @@ export default function CompanyFilters({
               focus:ring-2
               focus:ring-primary/20
               transition-all
-
               [&>option]:bg-background
               [&>option]:text-foreground
             "
           >
             <option value="">All Statuses</option>
-            <option value="NOT_CONTACTED">Not Contacted</option>
-            <option value="CONTACTED">Contacted</option>
-            <option value="IN_TALKS">In Talks</option>
-            <option value="NEGOTIATING">Negotiating</option>
-            <option value="POSITIVE">Positive</option>
-            <option value="CLOSED">Closed</option>
-            <option value="REJECTED">Rejected</option>
+            <option value="NOT_CONTACTED">
+              Not Contacted
+            </option>
+            <option value="CONTACTED">
+              Contacted
+            </option>
+            <option value="IN_TALKS">
+              In Talks
+            </option>
+            <option value="NEGOTIATING">
+              Negotiating
+            </option>
+            <option value="POSITIVE">
+              Positive
+            </option>
+            <option value="CLOSED">
+              Closed
+            </option>
+            <option value="REJECTED">
+              Rejected
+            </option>
           </select>
 
           <ChevronDown
             className="
               pointer-events-none
-              absolute right-3 top-1/2
-              h-4 w-4
+              absolute
+              right-3
+              top-1/2
+              h-4
+              w-4
               -translate-y-1/2
               text-muted-foreground
             "
           />
         </div>
 
-        {/* Domain */}
+        {/* ====================================================
+            DOMAIN
+        ==================================================== */}
+
         <div className="group relative">
           <Briefcase
             className="
               pointer-events-none
-              absolute left-3 top-1/2
-              h-4 w-4
+              absolute
+              left-3
+              top-1/2
+              z-10
+              h-4
+              w-4
               -translate-y-1/2
               text-muted-foreground
               transition-colors
               group-focus-within:text-primary
-              z-10
             "
           />
 
           <select
             defaultValue=""
-            onChange={(e) => handleChange("domain", e.target.value)}
+            onChange={(e) =>
+              handleChange("domain", e.target.value)
+            }
             className="
               appearance-none
               cursor-pointer
               rounded-lg
-              border border-input
+              border
+              border-input
               bg-background
-              py-2.5 pl-9 pr-9
+              py-2.5
+              pl-9
+              pr-9
               text-sm
               font-medium
               text-foreground
@@ -219,7 +297,6 @@ export default function CompanyFilters({
               focus:ring-2
               focus:ring-primary/20
               transition-all
-
               [&>option]:bg-background
               [&>option]:text-foreground
             "
@@ -239,8 +316,11 @@ export default function CompanyFilters({
           <ChevronDown
             className="
               pointer-events-none
-              absolute right-3 top-1/2
-              h-4 w-4
+              absolute
+              right-3
+              top-1/2
+              h-4
+              w-4
               -translate-y-1/2
               text-muted-foreground
             "
@@ -248,23 +328,30 @@ export default function CompanyFilters({
         </div>
       </div>
 
-      {/* =========================================================
-          RIGHT SIDE — ACTIONS & CONNECTION STATUS
-      ========================================================= */}
+      {/* ======================================================
+          RIGHT SIDE — GOOGLE + ACTIONS
+      ====================================================== */}
 
       <div className="flex flex-wrap items-center gap-3">
 
-        {/* Google Connection Status */}
+        {/* ====================================================
+            GOOGLE CONNECTION STATUS
+        ==================================================== */}
+
         {isAdmin && (
           <div className="mr-2 hidden flex-col items-end sm:flex">
 
             <div
               className="
-                flex items-center gap-2
+                flex
+                items-center
+                gap-2
                 rounded-full
-                border border-border
+                border
+                border-border
                 bg-muted/50
-                px-3 py-1.5
+                px-3
+                py-1.5
                 shadow-sm
               "
             >
@@ -319,27 +406,29 @@ export default function CompanyFilters({
                 "
               >
                 Last synced:{" "}
-                {new Date(lastSyncedAt).toLocaleTimeString(
-                  [],
-                  {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    month: "short",
-                    day: "numeric",
-                  }
-                )}
+                {new Date(
+                  lastSyncedAt
+                ).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  month: "short",
+                  day: "numeric",
+                })}
               </span>
             )}
           </div>
         )}
 
-        {/* =====================================================
+        {/* ====================================================
             ACTION BUTTONS
-        ===================================================== */}
+        ==================================================== */}
 
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
 
-          {/* Google */}
+          {/* ==================================================
+              GOOGLE
+          ================================================== */}
+
           {isAdmin &&
             (!isConnected ? (
               <Button
@@ -384,7 +473,8 @@ export default function CompanyFilters({
                   <Loader2
                     className="
                       mr-2
-                      h-4 w-4
+                      h-4
+                      w-4
                       shrink-0
                       animate-spin
                       text-emerald-500
@@ -394,18 +484,24 @@ export default function CompanyFilters({
                   <FileSpreadsheet
                     className="
                       mr-2
-                      h-4 w-4
+                      h-4
+                      w-4
                       shrink-0
                       text-emerald-500
                     "
                   />
                 )}
 
-                {loading ? "Syncing..." : "Sync Sheets"}
+                {loading
+                  ? "Syncing..."
+                  : "Sync Sheets"}
               </Button>
             ))}
 
-          {/* Add Company */}
+          {/* ==================================================
+              ADD COMPANY
+          ================================================== */}
+
           <Button
             onClick={onAdd}
             className="

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 import { useCompanies } from "../hooks/useCompany";
 import { useAuthStore } from "../stores/authstore";
+import { toast } from "sonner";
 
 import CompanyTable from "../components/companies/CompanyTable";
 import MemberCompanyTable from "../components/companies/MemberCompanyTable";
@@ -31,22 +32,17 @@ export default function Companies() {
   // COMPANIES
   // ============================================================
 
-  const {
-    companies,
-    isLoading,
-  } = useCompanies(filters);
+  const { companies, isLoading } = useCompanies(filters);
 
   // ============================================================
-  // GOOGLE SHEETS
+  // GOOGLE SHEETS STATUS
   // ============================================================
 
   const { googleConnected, lastSync } = useMemo(() => {
     const organization = user?.organization;
 
     return {
-      googleConnected: Boolean(
-        organization?.googleAccessToken
-      ),
+      googleConnected: Boolean(organization?.googleConnected),
       lastSync: organization?.lastSyncedAt ?? null,
     };
   }, [user?.organization]);
@@ -59,15 +55,13 @@ export default function Companies() {
     try {
       const response = await api.get("/google/connect");
 
-      const redirectUrl = response.data?.url;
+      const url = response.data?.url;
 
-      if (!redirectUrl) {
-        throw new Error(
-          "Google connection URL was not returned."
-        );
+      if (!url) {
+        throw new Error("Google OAuth URL was not returned.");
       }
 
-      window.location.href = redirectUrl;
+      window.location.href = url;
     } catch (error) {
       console.error(
         "Failed to initiate Google connection:",
@@ -83,24 +77,62 @@ export default function Companies() {
   const handleExport = async () => {
     try {
       const response = await api.post("/google/sync");
-
+  
       const sheetUrl = response.data?.url;
-
+  
       if (!sheetUrl) {
-        throw new Error(
-          "Google Sheets URL was not returned."
-        );
+        throw new Error("Google Sheets URL was not returned.");
       }
-
+  
+      toast.success("Google Sheets synced successfully!");
+  
       window.open(
         sheetUrl,
         "_blank",
         "noopener,noreferrer"
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error(
         "Failed to sync with Google Sheets:",
         error
+      );
+  
+      const status = error?.response?.status;
+      const errorCode = error?.response?.data?.error;
+  
+      if (
+        status === 401 &&
+        errorCode === "GOOGLE_RECONNECT_REQUIRED"
+      ) {
+        toast.info("Google connection expired. Reconnecting...");
+  
+        try {
+          const connectResponse = await api.get("/google/connect");
+  
+          const connectUrl = connectResponse.data?.url;
+  
+          if (!connectUrl) {
+            throw new Error(
+              "Google reconnect URL was not returned."
+            );
+          }
+  
+          window.location.href = connectUrl;
+        } catch (connectError) {
+          console.error(
+            "Failed to reconnect Google:",
+            connectError
+          );
+  
+          toast.error("Unable to reconnect Google.");
+        }
+  
+        return;
+      }
+  
+      toast.error(
+        error?.response?.data?.message ||
+        "Failed to sync with Google Sheets."
       );
     }
   };

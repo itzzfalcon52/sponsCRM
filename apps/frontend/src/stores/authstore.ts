@@ -67,15 +67,16 @@ export type User = {
    * - show org name in header
    * - if organization is null, redirect user to "Create/Join Org" screen
    */
-  organization?:
-    | {
-        id: string;
-        name: string;
-        inviteCode?: string;
-        googleAccessToken?: string | null;
-        lastSyncedAt?: string | null;
-      }
-    | null;
+  organization?: {
+  id: string;
+  name: string;
+  inviteCode?: string;
+  googleAccessToken?: string | null;
+  googleRefreshToken?: string | null;
+  googleConnected?: boolean;
+  lastSyncedAt?: string | null;
+  sheetId?: string | null;
+}| null;
 };
 
 /**
