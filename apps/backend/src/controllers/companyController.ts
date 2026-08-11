@@ -6,7 +6,8 @@ import {
   updateCompany,
   deleteCompany,
   getMyCompanies,
-  assignCompany
+  assignCompany,
+  bulkImportCompanies,
 } from "../models/companyModule.js";
 import { prisma } from "../lib/prisma.js";
 import {
@@ -359,3 +360,68 @@ export const searchDuplicatesController = async (req: any, res: Response) => {
     suggestions: potentialDuplicates.map(c => c.item.name)
   });
 };
+
+
+/* ============================================================
+   BULK IMPORT COMPANIES
+   ============================================================ */
+
+   export const bulkImportCompaniesController = async (
+    req: any,
+    res: Response
+  ) => {
+    try {
+      const userId = req.user.id;
+      const orgId = req.user.orgId;
+  
+      if (!orgId) {
+        return res.status(403).json({
+          status: "fail",
+          message:
+            "Join or create an organization first",
+        });
+      }
+  
+      const companies = await bulkImportCompanies(
+        userId,
+        orgId,
+        req.body
+      );
+  
+      return res.status(201).json({
+        status: "success",
+        message: `${companies.length} companies imported successfully`,
+        data: {
+          companies,
+          count: companies.length,
+        },
+      });
+    }  catch (error: any) {
+      console.error("BULK IMPORT COMPANIES ERROR:", error);
+    
+      if (error?.code === "P2002") {
+        return res.status(409).json({
+          status: "fail",
+          error: "DUPLICATE_COMPANY",
+          message:
+            "One or more companies already exist in this organization.",
+        });
+      }
+    
+      if (error?.name === "ZodError") {
+        return res.status(400).json({
+          status: "fail",
+          error: "VALIDATION_ERROR",
+          message: "Some imported company data is invalid.",
+          issues: error.issues,
+        });
+      }
+    
+      return res.status(500).json({
+        status: "error",
+        message: error?.message || "Failed to import companies.",
+        error: error?.code || error?.name || "UNKNOWN_ERROR",
+      });
+    
+  };
+}

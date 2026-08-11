@@ -112,6 +112,7 @@ model Company {
   contactName String
   linkedinUrl String?
   phoneNumber String?
+  email String?
   domain Domain @default(EDTECH)
   status Status @default(NOT_CONTACTED)
   amount Int?

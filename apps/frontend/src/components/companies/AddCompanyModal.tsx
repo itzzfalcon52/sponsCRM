@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { useCompanies } from "../../hooks/useCompany";
 import { useDuplicateCheck } from "../../hooks/useDuplicateCheck";
 import { cn } from "@/lib/utils";
+import { z } from "zod";
 
 // ============================================================
 // LINKEDIN ICON
@@ -75,6 +76,56 @@ const domains = [
   },
 ];
 
+const addCompanySchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Company name is required")
+    .max(255, "Company name is too long"),
+
+  contactName: z
+    .string()
+    .trim()
+    .min(2, "POC name must contain at least 2 characters")
+    .max(100, "POC name is too long"),
+
+  domain: z
+    .string()
+    .min(1, "Please select a sector"),
+
+  linkedinUrl: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal("")),
+
+  phoneNumber: z
+    .string()
+    .trim()
+    .min(5, "Phone number is too short")
+    .max(30, "Phone number is too long")
+    .optional()
+    .or(z.literal("")),
+
+  email: z
+    .string()
+    .trim()
+    .email("Enter a valid email address")
+    .optional()
+    .or(z.literal("")),
+
+  amount: z
+    .string()
+    .optional(),
+
+  type: z
+    .enum(["CASH", "IN_KIND"]),
+
+  note: z
+    .string()
+    .max(1000, "Note cannot exceed 1000 characters"),
+});
+
 // ============================================================
 // COMPONENT
 // ============================================================
@@ -98,6 +149,7 @@ export default function AddCompanyModal({
     domain: "",
     linkedinUrl: "",
     phoneNumber: "",
+    email: "",
     amount: "",
     type: "CASH",
     note: "",
@@ -140,46 +192,66 @@ export default function AddCompanyModal({
   // ============================================================
 
   const handleSubmit = () => {
-    const newErrors: Record<string, boolean> = {};
-
-    if (!form.name.trim()) {
-      newErrors.name = true;
-    }
-
-    if (!form.contactName.trim()) {
-      newErrors.contactName = true;
-    }
-
-    if (!form.domain.trim()) {
-      newErrors.domain = true;
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    const result = addCompanySchema.safeParse(form);
+  
+    if (!result.success) {
+      const fieldErrors: Record<string, boolean> = {};
+  
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0];
+  
+        if (typeof field === "string") {
+          fieldErrors[field] = true;
+        }
+      });
+  
+      setErrors(fieldErrors);
+  
+      toast.error(
+        result.error.issues[0]?.message ||
+          "Please fix the highlighted fields."
+      );
+  
       return;
     }
-
+  
+    setErrors({});
+  
     const payload = {
-      ...form,
-      name: form.name.trim(),
-      contactName: form.contactName.trim(),
-      amount: form.amount
-        ? Number(form.amount)
+      ...result.data,
+  
+      name: result.data.name.trim(),
+  
+      contactName:
+        result.data.contactName.trim(),
+  
+      linkedinUrl:
+        result.data.linkedinUrl?.trim() || undefined,
+  
+      phoneNumber:
+        result.data.phoneNumber?.trim() || undefined,
+  
+      email:
+        result.data.email?.trim() || undefined,
+  
+      amount: result.data.amount
+        ? Number(result.data.amount)
         : undefined,
+  
       force: forceCreate,
     };
-
+  
     setIsSubmitting(true);
-
+  
     createCompany(payload, {
       onSuccess: () => {
         setIsSubmitting(false);
         onClose();
       },
-
+  
       onError: (err: any) => {
         setIsSubmitting(false);
-
+  
         if (err.response?.status === 409) {
           setForceCreate(true);
         }
@@ -639,66 +711,99 @@ export default function AddCompanyModal({
             </div>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {/* PHONE */}
 
-              <div className="space-y-3">
-                <label className={labelClass}>
-                  Mobile / Desk
-                </label>
+  {/* PHONE */}
 
-                <div className="group relative">
-                  <Phone className={iconClass} />
+  <div className="space-y-3">
+    <label className={labelClass}>
+      Mobile / Desk
+    </label>
 
-                  <input
-                    value={form.phoneNumber}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        phoneNumber:
-                          e.target.value,
-                      })
-                    }
-                    className={cn(
-                      inputClass,
-                      "pl-14"
-                    )}
-                    placeholder="+XX XXXXX XXXXX"
-                  />
-                </div>
-              </div>
+    <div className="group relative">
+      <Phone className={iconClass} />
 
-              {/* LINKEDIN */}
+      <input
+        value={form.phoneNumber}
+        onChange={(e) =>
+          setForm({
+            ...form,
+            phoneNumber: e.target.value,
+          })
+        }
+        className={cn(
+          inputClass,
+          "pl-14"
+        )}
+        placeholder="+XX XXXXX XXXXX"
+      />
+    </div>
+  </div>
 
-              <div className="space-y-3">
-                <label className={labelClass}>
-                  Professional URL
-                </label>
+  {/* EMAIL */}
 
-                <div className="group relative">
-                  <LinkedInIcon
-                    className={`
-                      ${iconClass}
-                    `}
-                  />
+  <div className="space-y-3">
+    <label className={labelClass}>
+      Email
+    </label>
 
-                  <input
-                    value={form.linkedinUrl}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        linkedinUrl:
-                          e.target.value,
-                      })
-                    }
-                    className={cn(
-                      inputClass,
-                      "pl-14"
-                    )}
-                    placeholder="linkedin.com/..."
-                  />
-                </div>
-              </div>
-            </div>
+    <div className="group relative">
+      <input
+        type="email"
+        value={form.email}
+        onChange={(e) =>
+          setForm({
+            ...form,
+            email: e.target.value,
+          })
+        }
+        className={cn(
+          inputClass,
+          "pl-6",
+          errors.email &&
+            `
+              border-red-500/60
+              bg-red-50/30
+              focus:border-red-500
+              focus:ring-red-500/5
+              dark:border-red-500/60
+              dark:bg-red-950/20
+            `
+        )}
+        placeholder="poc@company.com"
+      />
+    </div>
+  </div>
+
+  {/* LINKEDIN */}
+
+  <div className="space-y-3 sm:col-span-2">
+    <label className={labelClass}>
+      Professional URL
+    </label>
+
+    <div className="group relative">
+      <LinkedInIcon
+        className={iconClass}
+      />
+
+      <input
+        value={form.linkedinUrl}
+        onChange={(e) =>
+          setForm({
+            ...form,
+            linkedinUrl: e.target.value,
+          })
+        }
+        className={cn(
+          inputClass,
+          "pl-14"
+        )}
+        placeholder="linkedin.com/..."
+      />
+    </div>
+  </div>
+
+</div>
           </div>
 
           {/* ====================================================

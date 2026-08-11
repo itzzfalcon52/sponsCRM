@@ -8,17 +8,30 @@ import {
   FileSpreadsheet,
   Link2,
   Loader2,
+  ClipboardPaste,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "../../stores/authstore";
 
 interface CompanyFiltersProps {
-  onChange: (updater: (prev: Record<string, string>) => Record<string, string>) => void;
+  onChange: (
+    updater: (
+      prev: Record<string, string>
+    ) => Record<string, string>
+  ) => void;
+
   onAdd: () => void;
+
   onExport: () => Promise<void>;
+
   onConnect: () => Promise<void>;
+
+  // NEW
+  onImport: () => void;
+
   isConnected: boolean;
+
   lastSyncedAt?: string | Date | null;
 }
 
@@ -27,6 +40,7 @@ export default function CompanyFilters({
   onAdd,
   onExport,
   onConnect,
+  onImport,
   isConnected,
   lastSyncedAt,
 }: CompanyFiltersProps) {
@@ -87,7 +101,6 @@ export default function CompanyFilters({
 
     try {
       setLoading(true);
-
       await onExport();
     } catch (error) {
       console.error(
@@ -95,7 +108,9 @@ export default function CompanyFilters({
         error
       );
 
-      toast.error("Export to Google Sheets failed");
+      toast.error(
+        "Export to Google Sheets failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -114,9 +129,7 @@ export default function CompanyFilters({
 
       <div className="flex flex-1 flex-wrap items-center gap-3">
 
-        {/* ====================================================
-            SEARCH
-        ==================================================== */}
+        {/* SEARCH */}
 
         <div className="group relative w-full sm:w-72">
           <Search
@@ -163,9 +176,7 @@ export default function CompanyFilters({
           />
         </div>
 
-        {/* ====================================================
-            STATUS
-        ==================================================== */}
+        {/* STATUS */}
 
         <div className="group relative">
           <Filter
@@ -187,7 +198,10 @@ export default function CompanyFilters({
           <select
             defaultValue=""
             onChange={(e) =>
-              handleChange("status", e.target.value)
+              handleChange(
+                "status",
+                e.target.value
+              )
             }
             className="
               appearance-none
@@ -213,25 +227,34 @@ export default function CompanyFilters({
               [&>option]:text-foreground
             "
           >
-            <option value="">All Statuses</option>
+            <option value="">
+              All Statuses
+            </option>
+
             <option value="NOT_CONTACTED">
               Not Contacted
             </option>
+
             <option value="CONTACTED">
               Contacted
             </option>
+
             <option value="IN_TALKS">
               In Talks
             </option>
+
             <option value="NEGOTIATING">
               Negotiating
             </option>
+
             <option value="POSITIVE">
               Positive
             </option>
+
             <option value="CLOSED">
               Closed
             </option>
+
             <option value="REJECTED">
               Rejected
             </option>
@@ -251,9 +274,7 @@ export default function CompanyFilters({
           />
         </div>
 
-        {/* ====================================================
-            DOMAIN
-        ==================================================== */}
+        {/* DOMAIN */}
 
         <div className="group relative">
           <Briefcase
@@ -275,7 +296,10 @@ export default function CompanyFilters({
           <select
             defaultValue=""
             onChange={(e) =>
-              handleChange("domain", e.target.value)
+              handleChange(
+                "domain",
+                e.target.value
+              )
             }
             className="
               appearance-none
@@ -301,7 +325,9 @@ export default function CompanyFilters({
               [&>option]:text-foreground
             "
           >
-            <option value="">All Domains</option>
+            <option value="">
+              All Domains
+            </option>
 
             {domains.map((domain) => (
               <option
@@ -334,9 +360,7 @@ export default function CompanyFilters({
 
       <div className="flex flex-wrap items-center gap-3">
 
-        {/* ====================================================
-            GOOGLE CONNECTION STATUS
-        ==================================================== */}
+        {/* GOOGLE CONNECTION STATUS */}
 
         {isAdmin && (
           <div className="mr-2 hidden flex-col items-end sm:flex">
@@ -425,9 +449,7 @@ export default function CompanyFilters({
 
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
 
-          {/* ==================================================
-              GOOGLE
-          ================================================== */}
+          {/* GOOGLE */}
 
           {isAdmin &&
             (!isConnected ? (
@@ -499,6 +521,34 @@ export default function CompanyFilters({
             ))}
 
           {/* ==================================================
+              IMPORT EXCEL / PASTE
+          ================================================== */}
+
+          {isAdmin && (
+            <Button
+              variant="outline"
+              onClick={onImport}
+              className="
+                flex-1
+                border-indigo-500/30
+                bg-indigo-500/5
+                font-semibold
+                text-indigo-600
+                shadow-sm
+                hover:border-indigo-500/50
+                hover:bg-indigo-500/10
+                hover:text-indigo-700
+                dark:text-indigo-400
+                dark:hover:text-indigo-300
+                sm:flex-none
+              "
+            >
+              <ClipboardPaste className="mr-2 h-4 w-4 shrink-0" />
+              Import Excel
+            </Button>
+          )}
+
+          {/* ==================================================
               ADD COMPANY
           ================================================== */}
 
@@ -519,6 +569,7 @@ export default function CompanyFilters({
             <Plus className="mr-2 h-4 w-4 shrink-0" />
             Add Company
           </Button>
+
         </div>
       </div>
     </div>

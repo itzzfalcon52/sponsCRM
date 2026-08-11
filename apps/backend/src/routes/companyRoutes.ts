@@ -8,7 +8,8 @@ import {
   myCompaniesController,
   assignCompanyController,
   bulkAssignController,
-  searchDuplicatesController
+  searchDuplicatesController,
+  bulkImportCompaniesController,
 } from "../controllers/companyController.js";
 
 import {
@@ -58,6 +59,12 @@ router.patch(
   "/bulk-assign",
   restrictTo("ADMIN", "SENIOR"),
   bulkAssignController
+);
+
+router.post(
+  "/bulk-import",
+  
+  bulkImportCompaniesController
 );
 
 /* ================================

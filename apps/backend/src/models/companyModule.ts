@@ -42,28 +42,170 @@ const DomainSchema = z.enum([
 
 const TypeSchema = z.enum(["CASH", "IN_KIND"]).optional();
 
+
+/* ============================================================
+   BULK IMPORT
+   ============================================================ */
+
+   export const bulkImportCompanySchema = z.object({
+    domain: DomainSchema,
+  
+    companies: z
+      .array(
+        z.object({
+          name: z
+            .string()
+            .trim()
+            .min(1, "Company name is required")
+            .max(255),
+  
+          contactName: z
+            .string()
+            .trim()
+            .min(2, "POC name must contain at least 2 characters")
+            .max(100),
+  
+          linkedinUrl: z
+            .string()
+            .trim()
+            .optional()
+            .or(z.literal("")),
+  
+          phoneNumber: z
+            .string()
+            .trim()
+            .optional()
+            .or(z.literal("")),
+  
+          email: z
+            .string()
+            .trim()
+            .email("Invalid email address")
+            .optional()
+            .or(z.literal("")),
+        })
+      )
+      .min(1, "At least one company is required")
+      .max(500, "You can import at most 500 companies at once"),
+  });
+  
+  export type BulkImportCompanyInput = z.infer<
+    typeof bulkImportCompanySchema
+  >;
+  
+  /* ============================================================
+     BULK IMPORT FUNCTION
+     ============================================================ */
+  
+  export const bulkImportCompanies = async (
+    userId: string,
+    orgId: string,
+    input: BulkImportCompanyInput
+  ) => {
+    const data = bulkImportCompanySchema.parse(input);
+  
+    const companies = data.companies.map((company) => ({
+      name: company.name,
+      contactName: company.contactName,
+  
+      linkedinUrl:
+        company.linkedinUrl?.trim() || null,
+  
+      phoneNumber:
+        company.phoneNumber?.trim() || null,
+  
+      email:
+        company.email?.trim() || null,
+  
+      domain: data.domain,
+  
+      status: "NOT_CONTACTED" as const,
+  
+      createdById: userId,
+      orgId,
+    }));
+  
+    /*
+     * Transaction ensures that either the entire import succeeds
+     * or nothing is inserted.
+     */
+    return prisma.$transaction(async (tx) => {
+      const createdCompanies = [];
+  
+      for (const company of companies) {
+        const created = await tx.company.create({
+          data: company,
+        });
+  
+        createdCompanies.push(created);
+      }
+  
+      return createdCompanies;
+    });
+  };
+
 /* ================================
    CREATE
 ================================ */
 
 export const createCompanySchema = z.object({
-  name: z.string().min(1).max(255),
-  contactName: z.string().min(2).max(100),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Company name is required")
+    .max(255),
 
-  linkedinUrl: z.string().optional(),
-  phoneNumber: z.string().min(5).max(30).optional(),
+  contactName: z
+    .string()
+    .trim()
+    .min(2, "POC name must contain at least 2 characters")
+    .max(100),
+
+  linkedinUrl: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal("")),
+
+  phoneNumber: z
+    .string()
+    .trim()
+    .min(5, "Phone number is too short")
+    .max(30)
+    .optional()
+    .or(z.literal("")),
+
+  email: z
+    .string()
+    .trim()
+    .email("Invalid email address")
+    .optional()
+    .or(z.literal("")),
+
   domain: DomainSchema.default("EDTECH"),
 
   status: StatusSchema.default("NOT_CONTACTED"),
-  amount: z.number().int().nonnegative().optional(),
+
+  amount: z
+    .number()
+    .int()
+    .nonnegative()
+    .optional(),
+
   type: TypeSchema,
 
   nextFollowUp: z.coerce.date().optional(),
+
   lastContactedAt: z.coerce.date().optional(),
-  note:z.string().max(1000).optional(),
+
+  note: z
+    .string()
+    .max(1000)
+    .optional(),
 });
 
-export type CreateCompanyInput = z.infer<typeof createCompanySchema>;
+export type CreateCompanyInput =
+  z.infer<typeof createCompanySchema>;
 
 /**
  * CREATE COMPANY 
@@ -145,6 +287,7 @@ export const listCompanies = async (
           contactName: true,
           phoneNumber: true, 
           linkedinUrl: true,
+          email: true,
           amount: true,      
           type: true,       
           status: true,
