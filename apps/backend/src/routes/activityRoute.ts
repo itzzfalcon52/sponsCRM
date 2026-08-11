@@ -6,11 +6,12 @@ import {
   getFollowUpsSummaryController
 } from "../controllers/activityController.js";
 
-import { protect, requireOrg,restrictTo } from "../middleware.js";
+import { protect, requireOrg,restrictTo,userRateLimiter } from "../middleware.js";
 
 const router = express.Router();
 
 router.use(protect);
+router.use(userRateLimiter);
 router.use(requireOrg);
 
 // Create activity

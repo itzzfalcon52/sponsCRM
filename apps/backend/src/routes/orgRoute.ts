@@ -3,11 +3,12 @@ import { createOrg, joinOrg,getOrgMembers,removeOrgMember,updateMemberRoleContro
     leaveOrgController, 
     deleteOrgController, } from "../controllers/organisationController.js";
 import { createOrganizationSchema } from "../models/organisationModule.js";
-import { protect,restrictTo,validate } from "../middleware.js";
+import { protect,restrictTo,validate,userRateLimiter } from "../middleware.js";
 
 const router = express.Router();
 
 router.use(protect);
+router.use(userRateLimiter);
 router.post("/create",validate(createOrganizationSchema),createOrg);
 router.post("/join",joinOrg);
 router.get("/members",restrictTo("ADMIN","SENIOR"),getOrgMembers);

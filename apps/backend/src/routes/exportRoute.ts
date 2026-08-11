@@ -1,8 +1,10 @@
 import express from "express";
 import { connectGoogle, googleCallback, syncSheets } from "../controllers/exportCompaniesController.js";
-import { protect,restrictTo} from "../middleware.js";
+import { protect,restrictTo,userRateLimiter} from "../middleware.js";
 
 const router = express.Router();
+
+router.use(userRateLimiter);
 
 // 1. Start OAuth
 router.get("/connect", protect,restrictTo("ADMIN"), connectGoogle);
