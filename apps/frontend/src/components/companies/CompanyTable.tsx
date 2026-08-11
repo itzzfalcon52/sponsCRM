@@ -15,6 +15,8 @@ import {
   Clock,
 } from "lucide-react";
 
+import { useCompanies } from "../../hooks/useCompany";
+
 import AssignModal from "./AssignModal";
 import EditCompanyModal from "./EditCompanyModal";
 import { getStatusColor } from "./CompanyTableUtils";
@@ -77,6 +79,8 @@ export default function CompanyTable({
   const [selectedTimelineCompany, setSelectedTimelineCompany] =
     useState<any>(null);
 
+  const { deleteCompany } = useCompanies();
+
   // ============================================================
   // CLOSE DROPDOWN WHEN CLICKING OUTSIDE
   // ============================================================
@@ -119,7 +123,32 @@ export default function CompanyTable({
     }
 
     if (action === "delete") {
-      console.log("Delete", company.id);
+      const confirmed = window.confirm(
+        `Are you sure you want to delete "${company.name}"?`
+      );
+    
+      if (!confirmed) {
+        return;
+      }
+    
+      deleteCompany(company.id, {
+        onSuccess: () => {
+          toast.success(
+            `${company.name} deleted successfully.`
+          );
+        },
+        onError: (error: any) => {
+          console.error(
+            "Delete company error:",
+            error
+          );
+    
+          toast.error(
+            error?.response?.data?.message ||
+              "Failed to delete company."
+          );
+        },
+      });
     }
   };
 
