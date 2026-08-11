@@ -86,6 +86,14 @@ export default function NavBar() {
             <Link to="/pricing" className="px-4 py-2 rounded-full text-sm font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all">Pricing</Link>
             <Link to="/about" className="px-4 py-2 rounded-full text-sm font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-all">About</Link>
           </nav>
+
+          <button
+           onClick={() => {
+           document.documentElement.classList.toggle("dark");
+           }}
+      >
+  Toggle Dark Mode
+</button>
         </div>
 
         {/* Right Auth Section */}
