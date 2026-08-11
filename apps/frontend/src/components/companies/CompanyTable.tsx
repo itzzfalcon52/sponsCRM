@@ -610,86 +610,134 @@ export default function CompanyTable({
 
                   {/* CONTACT INFO */}
 
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      {c.phoneNumber ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                  {/* ============================================================
+    CONTACT INFO
+============================================================ */}
 
-                            navigator.clipboard.writeText(
-                              c.phoneNumber
-                            );
+<td className="px-6 py-4">
+  <div className="flex items-center gap-3">
 
-                            toast.success(
-                              `Copied ${c.phoneNumber} to clipboard!`
-                            );
-                          }}
-                          className="
-                            rounded-md
-                            p-1.5
-                            text-muted-foreground
-                            transition-colors
-                            hover:bg-indigo-50
-                            hover:text-indigo-600
-                            dark:hover:bg-indigo-950/40
-                            dark:hover:text-indigo-400
-                          "
-                          title={`Copy ${c.phoneNumber}`}
-                        >
-                          <Phone className="h-4 w-4" />
-                        </button>
-                      ) : (
-                        <span
-                          className="
-                            p-1.5
-                            text-muted-foreground/30
-                          "
-                          title="No Phone"
-                        >
-                          <Phone className="h-4 w-4" />
-                        </span>
-                      )}
+    {/* PHONE */}
 
-                      {c.linkedinUrl ? (
-                        <a
-                          href={
-                            c.linkedinUrl.startsWith("http")
-                              ? c.linkedinUrl
-                              : `https://${c.linkedinUrl}`
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="
-                            rounded-md
-                            p-1.5
-                            text-muted-foreground
-                            transition-colors
-                            hover:bg-blue-50
-                            hover:text-blue-600
-                            dark:hover:bg-blue-950/40
-                            dark:hover:text-blue-400
-                          "
-                          title="Open LinkedIn in new tab"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      ) : (
-                        <span
-                          className="
-                            p-1.5
-                            text-muted-foreground/30
-                          "
-                          title="No LinkedIn"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </span>
-                      )}
-                    </div>
-                  </td>
+    {c.phoneNumber ? (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
 
+          navigator.clipboard.writeText(
+            c.phoneNumber
+          );
+
+          toast.success(
+            `Copied ${c.phoneNumber} to clipboard!`
+          );
+        }}
+        className="
+          rounded-md
+          p-1.5
+          text-muted-foreground
+          transition-colors
+          hover:bg-indigo-50
+          hover:text-indigo-600
+          dark:hover:bg-indigo-950/40
+          dark:hover:text-indigo-400
+        "
+        title={`Copy ${c.phoneNumber}`}
+      >
+        <Phone className="h-4 w-4" />
+      </button>
+    ) : (
+      <span
+        className="
+          rounded-md
+          p-1.5
+          text-muted-foreground/30
+        "
+        title="No Phone"
+      >
+        <Phone className="h-4 w-4" />
+      </span>
+    )}
+
+    {/* LINKEDIN */}
+
+    {c.linkedinUrl ? (
+      <a
+        href={
+          c.linkedinUrl.startsWith("http")
+            ? c.linkedinUrl
+            : `https://${c.linkedinUrl}`
+        }
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) =>
+          e.stopPropagation()
+        }
+        className="
+          rounded-md
+          p-1.5
+          text-muted-foreground
+          transition-colors
+          hover:bg-blue-50
+          hover:text-blue-600
+          dark:hover:bg-blue-950/40
+          dark:hover:text-blue-400
+        "
+        title="Open LinkedIn in new tab"
+      >
+        <ExternalLink className="h-4 w-4" />
+      </a>
+    ) : (
+      <span
+        className="
+          rounded-md
+          p-1.5
+          text-muted-foreground/30
+        "
+        title="No LinkedIn"
+      >
+        <ExternalLink className="h-4 w-4" />
+      </span>
+    )}
+
+    {/* EMAIL */}
+
+    {c.email ? (
+      <a
+        href={`mailto:${c.email}`}
+        onClick={(e) =>
+          e.stopPropagation()
+        }
+        className="
+          rounded-md
+          p-1.5
+          text-muted-foreground
+          transition-colors
+          hover:bg-amber-50
+          hover:text-amber-600
+          dark:hover:bg-amber-950/40
+          dark:hover:text-amber-400
+        "
+        title={`Email ${c.email}`}
+      >
+        <Mail className="h-4 w-4" />
+      </a>
+    ) : (
+      <span
+        className="
+          rounded-md
+          p-1.5
+          text-muted-foreground/30
+        "
+        title="No Email"
+      >
+        <Mail className="h-4 w-4" />
+      </span>
+    )}
+
+  </div>
+</td>
                   {/* DOMAIN */}
 
                   <td className="px-6 py-4">
