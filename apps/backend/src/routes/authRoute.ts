@@ -49,11 +49,13 @@ router.post("/login", authLimiter, login);
 // PROTECTED AUTH ROUTES
 // ============================================================
 
+router.post("/logout", logout);
+
 router.use(protect);
 
 router.get("/me", me);
 
-router.post("/logout", logout);
+
 
 router.patch("/update-me", updateProfile);
 

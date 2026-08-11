@@ -40,9 +40,9 @@ export const protect = async (req: any, res: Response, next: any) => {
         orgId: string | null;
       };
 
-      console.log("PROTECT: JWT VALID", decoded.userId);
+      
 
-      const dbStart = Date.now(); //for testing 
+      
   
       // 2. Verify user still exists 
       const currentUser = await prisma.user.findUnique({
@@ -54,9 +54,7 @@ export const protect = async (req: any, res: Response, next: any) => {
         },
       });
 
-      console.log(
-        `protect → user.findUnique: ${Date.now() - dbStart}ms`
-      );
+      
 
       /*
       User logs in
@@ -126,16 +124,14 @@ export const validate = (schema: any) => {   //ZOD MIDDLEWARE
       });
     }
 
-    const dbStart = Date.now();
+    
   
     const org = await prisma.organization.findUnique({
       where: { id: req.user.orgId },
       select: { id: true },
     });
 
-    console.log(
-      `requireOrg → organization.findUnique: ${Date.now() - dbStart}ms`
-    );
+    
   
     if (!org) {
       return res.status(403).json({

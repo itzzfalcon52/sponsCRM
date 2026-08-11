@@ -106,32 +106,32 @@ export default function AdminDashboard() {
   const COLORS = ["#4f46e5", "#ec4899"];
 
   return (
-    <div className="flex-1 space-y-6 p-8 bg-slate-50 min-h-screen">
+    <div className="flex-1 min-h-screen space-y-6 bg-background p-8 text-foreground">
       
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard Overview</h2>
+      <h2 className="text-3xl font-bold tracking-tight text-foreground">Dashboard Overview</h2>
       </div>
 
       {/* Top Stats Row */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="shadow-sm border-slate-200 hover:shadow-md transition-shadow duration-200">
+        <Card className="border-border bg-card shadow-sm hover:shadow-md transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Pipeline</CardTitle>
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Total Pipeline</CardTitle>
             <Building2 className="h-4 w-4 text-slate-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{total}</div>
-            <p className="text-xs text-slate-500 mt-1 font-medium">Active company entries</p>
+            <div className="text-2xl font-bold text-card-foreground">{total}</div>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">Active company entries</p>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-slate-200 hover:shadow-md transition-shadow duration-200">
+        <Card className="border-border bg-card shadow-sm hover:shadow-md transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Conversion</CardTitle>
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Conversion</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{closed}</div>
+            <div className="text-2xl font-bold text-card-foreground">{closed}</div>
             <p className="text-xs text-emerald-600 mt-1 font-medium bg-emerald-50 w-fit px-2 py-0.5 rounded-full">
                {total > 0 ? ((closed/total)*100).toFixed(1) : 0}% success rate
             </p>
@@ -139,8 +139,8 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Weighted Cash Card - The SaaS "Forecast" Card */}
-        <Card className="shadow-sm border-slate-200 relative overflow-hidden group hover:shadow-md transition-all">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent -z-10"></div>
+        <Card className="border-border bg-card shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent dark:from-indigo-950/30 -z-10"></div>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-semibold text-indigo-700 uppercase tracking-wider">Revenue Forecast</CardTitle>
             <TrendingUp className="h-4 w-4 text-indigo-600 animate-pulse" />
@@ -149,13 +149,13 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold text-indigo-700">{formatCurrency(weightedPipeline)}</div>
             <div className="flex flex-col gap-1 mt-1">
                 <p className="text-[10px] text-indigo-500 font-bold uppercase">Weighted Pipeline Value</p>
-                <p className="text-xs text-slate-400 font-medium italic">Actual Collected: {formatCurrency(totalCash)}</p>
+                <p className="text-xs text-muted-foreground font-medium italic">Actual Collected: {formatCurrency(totalCash)}</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-slate-200 relative overflow-hidden group hover:shadow-md transition-all">
-           <div className="absolute inset-0 bg-gradient-to-br from-pink-50/50 to-transparent -z-10"></div>
+        <Card className="border-border bg-card shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+           <div className="absolute inset-0 bg-gradient-to-br from-pink-50/50 to-transparent dark:from-pink-950/30 -z-10"></div>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-semibold text-pink-700 uppercase tracking-wider">In-Kind Value</CardTitle>
             <Gift className="h-4 w-4 text-pink-600" />
@@ -173,21 +173,40 @@ export default function AdminDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         
         {/* Pipeline Funnel */}
-        <Card className="col-span-4 shadow-sm border-slate-200">
+        <Card className="col-span-4 border-border bg-card shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-bold text-slate-800">Pipeline Velocity</CardTitle>
-            <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded uppercase font-bold tracking-tighter">Real-time</span>
+            <CardTitle className="text-lg font-bold text-card-foreground">Pipeline Velocity</CardTitle>
+            <span className="text-[10px] bg-slate-100 text-muted-foreground px-2 py-1 rounded uppercase font-bold tracking-tighter">Real-time</span>
           </CardHeader>
           <CardContent className="pl-0">
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={pipelineData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                  <Tooltip 
-                    cursor={{fill: '#f8fafc'}} 
-                    contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} 
-                  />
+                <XAxis
+                  dataKey="name"
+                  stroke="var(--muted-foreground)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+
+                <YAxis
+                  stroke="var(--muted-foreground)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+
+                <Tooltip
+                  cursor={{ fill: "var(--muted)" }}
+                  contentStyle={{
+                    borderRadius: "12px",
+                    border: "1px solid var(--border)",
+                    backgroundColor: "var(--popover)",
+                   color: "var(--popover-foreground)",
+                   boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+                  }}
+                />
                   <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} barSize={32} />
                 </BarChart>
               </ResponsiveContainer>
@@ -197,13 +216,13 @@ export default function AdminDashboard() {
         
 
         {/* Revenue Split */}
-        <Card className="col-span-3 shadow-sm border-slate-200">
+        <Card className="col-span-3 border-border bg-card shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg font-bold text-slate-800">Financial Split</CardTitle>
+            <CardTitle className="text-lg font-bold text-card-foreground">Financial Split</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center justify-center">
             {totalCash === 0 && totalInKind === 0 ? (
-               <div className="h-[250px] flex items-center justify-center text-slate-400 font-medium animate-pulse">Waiting for first deal...</div>
+               <div className="h-[250px] flex items-center justify-center text-muted-foreground font-medium animate-pulse">Waiting for first deal...</div>
             ) : (
               <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -231,10 +250,10 @@ export default function AdminDashboard() {
               </div>
             )}
             <div className="flex gap-6 mt-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+              <div className="flex items-center gap-2 text-xs font-bold text-card-foreground">
                 <div className="h-2 w-2 rounded-full bg-indigo-600"></div> CASH
               </div>
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+              <div className="flex items-center gap-2 text-xs font-bold text-card-foreground">
                 <div className="h-2 w-2 rounded-full bg-pink-500"></div> IN-KIND
               </div>
             </div>
@@ -246,20 +265,20 @@ export default function AdminDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         
         {/* Recent Activity Table */}
-        <Card className="col-span-4 shadow-sm border-slate-200 overflow-hidden">
-          <CardHeader className="border-b bg-slate-50/50">
-            <CardTitle className="text-lg font-bold text-slate-800">Portfolio Overview</CardTitle>
+        <Card className="col-span-4 border-border bg-card shadow-sm overflow-hidden">
+          <CardHeader className="border-b bg-card">
+            <CardTitle className="text-lg font-bold text-card-foreground">Portfolio Overview</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-slate-100">
               {safeCompanies.length === 0 ? (
-                <p className="p-8 text-center text-sm text-slate-500">No portfolio data found.</p>
+                <p className="p-8 text-center text-sm text-muted-foreground">No portfolio data found.</p>
               ) : (
                 safeCompanies.slice(0, 5).map((c: any) => (
                   <div key={c.id} className="flex items-center justify-between p-4 hover:bg-slate-50/80 transition-colors">
                     <div className="flex flex-col gap-0.5">
-                      <p className="text-sm font-bold text-slate-900">{c.name}</p>
-                      <p className="text-[11px] text-slate-500 font-medium">{c.contactName} • {c.domain || "General"}</p>
+                      <p className="text-sm font-bold text-card-foreground">{c.name}</p>
+                      <p className="text-[11px] text-muted-foreground font-medium">{c.contactName} • {c.domain || "General"}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1.5">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter
@@ -269,7 +288,7 @@ export default function AdminDashboard() {
                         {c.status.replace("_", " ")}
                       </span>
                       {c.amount > 0 && c.status === "CLOSED" && (
-                         <span className="text-[11px] font-bold text-slate-700 bg-slate-100 px-1.5 rounded">
+                         <span className="text-[11px] font-bold text-card-foreground bg-slate-100 px-1.5 rounded">
                            {formatCurrency(c.amount)}
                          </span>
                       )}
@@ -282,15 +301,15 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Team Members Workload */}
-        <Card className="col-span-3 shadow-sm border-slate-200 overflow-hidden">
-          <CardHeader className="border-b bg-slate-50/50 flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-bold text-slate-800">Team Workload</CardTitle>
+        <Card className="col-span-3 border-border bg-card shadow-sm overflow-hidden">
+          <CardHeader className="border-b bg-card flex flex-row items-center justify-between">
+            <CardTitle className="text-lg font-bold text-card-foreground">Team Workload</CardTitle>
             <Users className="h-4 w-4 text-slate-400" />
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-slate-100">
               {memberStats.length === 0 ? (
-                <p className="p-8 text-center text-sm text-slate-500">No active team members.</p>
+                <p className="p-8 text-center text-sm text-muted-foreground">No active team members.</p>
               ) : (
                 memberStats.map((member: any) => (
                   <div key={member.id} className="flex items-center justify-between p-4 hover:bg-slate-50/80 transition-colors">
@@ -299,13 +318,13 @@ export default function AdminDashboard() {
                         {member.name ? member.name.charAt(0).toUpperCase() : "?"}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-900 leading-none">{member.name}</p>
+                        <p className="text-sm font-bold text-card-foreground leading-none">{member.name}</p>
                         <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight">{member.role}</p>
                       </div>
                     </div>
                     <div className="flex flex-col items-end">
-                      <div className="text-sm font-black text-slate-700">{member.assignedCount}</div>
-                      <span className="text-[9px] text-slate-400 uppercase font-bold">Accounts</span>
+                      <div className="text-sm font-black text-card-foreground">{member.assignedCount}</div>
+                      <span className="text-[9px] text-muted-foreground uppercase font-bold">Accounts</span>
                     </div>
                   </div>
                 ))
