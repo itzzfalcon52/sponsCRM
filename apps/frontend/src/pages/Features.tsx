@@ -1,13 +1,12 @@
 import { 
     BarChart3, 
-    Workflow, 
-    Search, 
+    
     Zap, 
     Users, 
     LayoutGrid, 
-    ShieldCheck,
+   
     TrendingUp,
-    MousePointer2
+    
   } from "lucide-react";
   import { Button } from "@/components/ui/button";
   import { useNavigate } from "react-router-dom";
