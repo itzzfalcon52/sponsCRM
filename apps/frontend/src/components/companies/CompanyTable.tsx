@@ -27,6 +27,73 @@ import { toast } from "sonner";
 import ActivityModal from "../activity/activityModal";
 import TimelineModal from "../activity/TimelineModal";
 
+
+// ============================================================
+// TABLE SKELETON
+// ============================================================
+
+function TableSkeleton({
+  isBulkMode = false,
+}: {
+  isBulkMode?: boolean;
+}) {
+  return (
+    <>
+      {[...Array(5)].map((_, i) => (
+        <tr
+          key={i}
+          className="
+            animate-pulse
+            border-b border-border
+            last:border-0
+          "
+        >
+          {isBulkMode && (
+            <td className="w-12 px-6 py-4">
+              <div className="h-4 w-4 rounded bg-muted" />
+            </td>
+          )}
+
+          <td className="px-6 py-4">
+            <div className="mb-2 h-4 w-32 rounded bg-muted" />
+            <div className="h-3 w-24 rounded bg-muted/70" />
+          </td>
+
+          <td className="px-6 py-4">
+            <div className="flex gap-2">
+              <div className="h-6 w-6 rounded bg-muted" />
+              <div className="h-6 w-6 rounded bg-muted" />
+            </div>
+          </td>
+
+          <td className="px-6 py-4">
+            <div className="h-6 w-20 rounded-md bg-muted" />
+          </td>
+
+          <td className="px-6 py-4">
+            <div className="h-6 w-24 rounded-full bg-muted" />
+          </td>
+
+          <td className="px-6 py-4">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-full bg-muted" />
+              <div className="h-4 w-20 rounded bg-muted" />
+            </div>
+          </td>
+
+          <td className="px-6 py-4">
+            <div className="h-4 w-20 rounded bg-muted" />
+          </td>
+
+          <td className="px-6 py-4 text-right">
+            <div className="ml-auto h-6 w-6 rounded bg-muted" />
+          </td>
+        </tr>
+      ))}
+    </>
+  );
+}
+
 export default function CompanyTable({
   companies = [],
   isLoading = false,
@@ -47,11 +114,11 @@ export default function CompanyTable({
 
   const [selected, setSelected] = useState<any>(null);
 
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(
-    null
-  );
+  const [openDropdownId, setOpenDropdownId] =
+    useState<string | null>(null);
 
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownRef =
+    useRef<HTMLDivElement | null>(null);
 
   // ============================================================
   // PAGINATION
@@ -61,7 +128,9 @@ export default function CompanyTable({
 
   const itemsPerPage = 10;
 
-  const totalPages = Math.ceil(companies.length / itemsPerPage);
+  const totalPages = Math.ceil(
+    companies.length / itemsPerPage
+  );
 
   const paginatedCompanies = companies.slice(
     (currentPage - 1) * itemsPerPage,
@@ -73,11 +142,24 @@ export default function CompanyTable({
   // ============================================================
 
   const [activityOpen, setActivityOpen] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<any>(null);
+  const [selectedCompany, setSelectedCompany] =
+    useState<any>(null);
 
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [selectedTimelineCompany, setSelectedTimelineCompany] =
     useState<any>(null);
+
+  // ============================================================
+  // CONTACT INFORMATION
+  // ============================================================
+
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactCompany, setContactCompany] =
+    useState<any>(null);
+
+  // ============================================================
+  // COMPANY MUTATIONS
+  // ============================================================
 
   const { deleteCompany } = useCompanies();
 
@@ -89,16 +171,24 @@ export default function CompanyTable({
     function handleClickOutside(event: MouseEvent) {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        !dropdownRef.current.contains(
+          event.target as Node
+        )
       ) {
         setOpenDropdownId(null);
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
     };
   }, []);
 
@@ -126,23 +216,24 @@ export default function CompanyTable({
       const confirmed = window.confirm(
         `Are you sure you want to delete "${company.name}"?`
       );
-    
+
       if (!confirmed) {
         return;
       }
-    
+
       deleteCompany(company.id, {
         onSuccess: () => {
           toast.success(
             `${company.name} deleted successfully.`
           );
         },
+
         onError: (error: any) => {
           console.error(
             "Delete company error:",
             error
           );
-    
+
           toast.error(
             error?.response?.data?.message ||
               "Failed to delete company."
@@ -164,7 +255,9 @@ export default function CompanyTable({
       setSelectedIds([]);
     } else {
       setSelectedIds(
-        paginatedCompanies.map((company: any) => company.id)
+        paginatedCompanies.map(
+          (company: any) => company.id
+        )
       );
     }
   };
@@ -316,65 +409,8 @@ export default function CompanyTable({
     }
   };
 
-  // ============================================================
-  // SKELETON
-  // ============================================================
 
-  const TableSkeleton = () => (
-    <>
-      {[...Array(5)].map((_, i) => (
-        <tr
-          key={i}
-          className="
-            animate-pulse
-            border-b border-border
-            last:border-0
-          "
-        >
-          {isBulkMode && (
-            <td className="w-12 px-6 py-4">
-              <div className="h-4 w-4 rounded bg-muted" />
-            </td>
-          )}
 
-          <td className="px-6 py-4">
-            <div className="mb-2 h-4 w-32 rounded bg-muted" />
-            <div className="h-3 w-24 rounded bg-muted/70" />
-          </td>
-
-          <td className="px-6 py-4">
-            <div className="flex gap-2">
-              <div className="h-6 w-6 rounded bg-muted" />
-              <div className="h-6 w-6 rounded bg-muted" />
-            </div>
-          </td>
-
-          <td className="px-6 py-4">
-            <div className="h-6 w-20 rounded-md bg-muted" />
-          </td>
-
-          <td className="px-6 py-4">
-            <div className="h-6 w-24 rounded-full bg-muted" />
-          </td>
-
-          <td className="px-6 py-4">
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-full bg-muted" />
-              <div className="h-4 w-20 rounded bg-muted" />
-            </div>
-          </td>
-
-          <td className="px-6 py-4">
-            <div className="h-4 w-20 rounded bg-muted" />
-          </td>
-
-          <td className="px-6 py-4 text-right">
-            <div className="ml-auto h-6 w-6 rounded bg-muted" />
-          </td>
-        </tr>
-      ))}
-    </>
-  );
 
   // ============================================================
   // RENDER
@@ -434,7 +470,9 @@ export default function CompanyTable({
           {/* Bulk Toggle */}
 
           <Button
-            variant={isBulkMode ? "secondary" : "outline"}
+            variant={
+              isBulkMode ? "secondary" : "outline"
+            }
             onClick={handleToggleBulkMode}
             className="
               font-semibold
@@ -448,7 +486,9 @@ export default function CompanyTable({
           >
             <CheckSquare className="mr-2 h-4 w-4 shrink-0" />
 
-            {isBulkMode ? "Cancel Selection" : "Bulk Assign"}
+            {isBulkMode
+              ? "Cancel Selection"
+              : "Bulk Assign"}
           </Button>
 
           {/* Assign Selected */}
@@ -497,7 +537,8 @@ export default function CompanyTable({
                   <input
                     type="checkbox"
                     checked={
-                      selectedIds.length === paginatedCompanies.length &&
+                      selectedIds.length ===
+                        paginatedCompanies.length &&
                       paginatedCompanies.length > 0
                     }
                     onChange={toggleSelectAll}
@@ -592,14 +633,20 @@ export default function CompanyTable({
                     <td className="px-6 py-4 text-center">
                       <input
                         type="checkbox"
-                        checked={selectedIds.includes(c.id)}
+                        checked={selectedIds.includes(
+                          c.id
+                        )}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setSelectedIds([...selectedIds, c.id]);
+                            setSelectedIds([
+                              ...selectedIds,
+                              c.id,
+                            ]);
                           } else {
                             setSelectedIds(
                               selectedIds.filter(
-                                (id: string) => id !== c.id
+                                (id: string) =>
+                                  id !== c.id
                               )
                             );
                           }
@@ -639,134 +686,39 @@ export default function CompanyTable({
 
                   {/* CONTACT INFO */}
 
-                  {/* ============================================================
-    CONTACT INFO
-============================================================ */}
+                  <td className="px-6 py-4">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setContactCompany(c);
+                        setContactOpen(true);
+                      }}
+                      className="
+                        inline-flex
+                        items-center
+                        gap-2
+                        rounded-md
+                        border
+                        border-border
+                        bg-background
+                        px-2.5
+                        py-1.5
+                        text-xs
+                        font-semibold
+                        text-muted-foreground
+                        shadow-sm
+                        transition-colors
+                        hover:bg-muted
+                        hover:text-foreground
+                      "
+                      title="View contact information"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      View Contact
+                    </button>
+                  </td>
 
-<td className="px-6 py-4">
-  <div className="flex items-center gap-3">
-
-    {/* PHONE */}
-
-    {c.phoneNumber ? (
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-
-          navigator.clipboard.writeText(
-            c.phoneNumber
-          );
-
-          toast.success(
-            `Copied ${c.phoneNumber} to clipboard!`
-          );
-        }}
-        className="
-          rounded-md
-          p-1.5
-          text-muted-foreground
-          transition-colors
-          hover:bg-indigo-50
-          hover:text-indigo-600
-          dark:hover:bg-indigo-950/40
-          dark:hover:text-indigo-400
-        "
-        title={`Copy ${c.phoneNumber}`}
-      >
-        <Phone className="h-4 w-4" />
-      </button>
-    ) : (
-      <span
-        className="
-          rounded-md
-          p-1.5
-          text-muted-foreground/30
-        "
-        title="No Phone"
-      >
-        <Phone className="h-4 w-4" />
-      </span>
-    )}
-
-    {/* LINKEDIN */}
-
-    {c.linkedinUrl ? (
-      <a
-        href={
-          c.linkedinUrl.startsWith("http")
-            ? c.linkedinUrl
-            : `https://${c.linkedinUrl}`
-        }
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) =>
-          e.stopPropagation()
-        }
-        className="
-          rounded-md
-          p-1.5
-          text-muted-foreground
-          transition-colors
-          hover:bg-blue-50
-          hover:text-blue-600
-          dark:hover:bg-blue-950/40
-          dark:hover:text-blue-400
-        "
-        title="Open LinkedIn in new tab"
-      >
-        <ExternalLink className="h-4 w-4" />
-      </a>
-    ) : (
-      <span
-        className="
-          rounded-md
-          p-1.5
-          text-muted-foreground/30
-        "
-        title="No LinkedIn"
-      >
-        <ExternalLink className="h-4 w-4" />
-      </span>
-    )}
-
-    {/* EMAIL */}
-
-    {c.email ? (
-      <a
-        href={`mailto:${c.email}`}
-        onClick={(e) =>
-          e.stopPropagation()
-        }
-        className="
-          rounded-md
-          p-1.5
-          text-muted-foreground
-          transition-colors
-          hover:bg-amber-50
-          hover:text-amber-600
-          dark:hover:bg-amber-950/40
-          dark:hover:text-amber-400
-        "
-        title={`Email ${c.email}`}
-      >
-        <Mail className="h-4 w-4" />
-      </a>
-    ) : (
-      <span
-        className="
-          rounded-md
-          p-1.5
-          text-muted-foreground/30
-        "
-        title="No Email"
-      >
-        <Mail className="h-4 w-4" />
-      </span>
-    )}
-
-  </div>
-</td>
                   {/* DOMAIN */}
 
                   <td className="px-6 py-4">
@@ -817,7 +769,9 @@ export default function CompanyTable({
                   <td className="px-6 py-4">
                     {getLatestActivity(c.activities) ? (
                       renderActivityPill(
-                        getLatestActivity(c.activities)
+                        getLatestActivity(
+                          c.activities
+                        )
                       )
                     ) : (
                       <span
@@ -903,11 +857,14 @@ export default function CompanyTable({
                       >
                         {new Date(
                           c.lastContactedAt
-                        ).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+                        ).toLocaleDateString(
+                          undefined,
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          }
+                        )}
                       </span>
                     ) : (
                       <span
@@ -1096,7 +1053,8 @@ export default function CompanyTable({
       <div
         className="
           flex
-          items-center justify-between
+          items-center
+          justify-between
           rounded-b-xl
           border-t border-border
           bg-muted/40
@@ -1108,7 +1066,9 @@ export default function CompanyTable({
           <span className="font-medium text-foreground">
             {companies.length === 0
               ? 0
-              : (currentPage - 1) * itemsPerPage + 1}
+              : (currentPage - 1) *
+                  itemsPerPage +
+                1}
           </span>{" "}
           to{" "}
           <span className="font-medium text-foreground">
@@ -1139,7 +1099,9 @@ export default function CompanyTable({
                 shadow-sm
                 hover:bg-muted
               "
-              disabled={currentPage === 1 || isLoading}
+              disabled={
+                currentPage === 1 || isLoading
+              }
               onClick={() =>
                 setCurrentPage((prev) =>
                   Math.max(prev - 1, 1)
@@ -1153,34 +1115,32 @@ export default function CompanyTable({
             {/* Page Numbers */}
 
             <div className="hidden items-center gap-1 sm:flex">
-              {Array.from({ length: totalPages }).map(
-                (_, i) => (
-                  <button
-                    key={i}
-                    disabled={isLoading}
-                    onClick={() =>
-                      setCurrentPage(i + 1)
+              {Array.from({
+                length: totalPages,
+              }).map((_, i) => (
+                <button
+                  key={i}
+                  disabled={isLoading}
+                  onClick={() =>
+                    setCurrentPage(i + 1)
+                  }
+                  className={`
+                    h-8 w-8
+                    rounded-md
+                    text-sm
+                    font-medium
+                    transition-colors
+                    ${
+                      currentPage === i + 1
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }
-                    className={`
-                      h-8 w-8
-                      rounded-md
-                      text-sm
-                      font-medium
-                      transition-colors
-
-                      ${
-                        currentPage === i + 1
-                          ? "bg-indigo-600 text-white shadow-sm"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }
-
-                      disabled:opacity-50
-                    `}
-                  >
-                    {i + 1}
-                  </button>
-                )
-              )}
+                    disabled:opacity-50
+                  `}
+                >
+                  {i + 1}
+                </button>
+              ))}
             </div>
 
             {/* Next */}
@@ -1197,11 +1157,15 @@ export default function CompanyTable({
                 hover:bg-muted
               "
               disabled={
-                currentPage === totalPages || isLoading
+                currentPage === totalPages ||
+                isLoading
               }
               onClick={() =>
                 setCurrentPage((prev) =>
-                  Math.min(prev + 1, totalPages)
+                  Math.min(
+                    prev + 1,
+                    totalPages
+                  )
                 )
               }
             >
@@ -1244,6 +1208,218 @@ export default function CompanyTable({
         onClose={() => setTimelineOpen(false)}
         company={selectedTimelineCompany}
       />
+
+      {/* ========================================================
+          CONTACT INFORMATION MODAL
+      ======================================================== */}
+
+      {contactOpen && contactCompany && (
+        <div
+          className="
+            fixed inset-0 z-[100]
+            flex items-center justify-center
+            bg-black/50
+            p-4
+            backdrop-blur-sm
+          "
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setContactOpen(false);
+            }
+          }}
+        >
+          <div
+            className="
+              w-full
+              max-w-md
+              rounded-2xl
+              border border-border
+              bg-card
+              p-6
+              text-card-foreground
+              shadow-2xl
+            "
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="contact-info-title"
+          >
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h3
+                  id="contact-info-title"
+                  className="text-lg font-semibold text-foreground"
+                >
+                  Contact Information
+                </h3>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {contactCompany.name}
+
+                  {contactCompany.contactName
+                    ? ` • ${contactCompany.contactName}`
+                    : ""}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setContactOpen(false)
+                }
+                className="
+                  rounded-md
+                  p-1.5
+                  text-muted-foreground
+                  transition-colors
+                  hover:bg-muted
+                  hover:text-foreground
+                "
+                aria-label="Close contact information"
+              >
+                <span className="text-xl leading-none">
+                  ×
+                </span>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {/* PHONE */}
+
+              <div className="rounded-xl border border-border bg-muted/30 p-4">
+                <div className="flex items-center gap-3">
+                  <Phone className="h-4 w-4 shrink-0 text-indigo-600" />
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Phone
+                    </p>
+
+                    {contactCompany.phoneNumber ? (
+                      <a
+                        href={`tel:${contactCompany.phoneNumber}`}
+                        onClick={(e) =>
+                          e.stopPropagation()
+                        }
+                        className="
+                          mt-1
+                          block
+                          truncate
+                          text-sm
+                          font-medium
+                          text-foreground
+                          hover:text-indigo-600
+                        "
+                      >
+                        {contactCompany.phoneNumber}
+                      </a>
+                    ) : (
+                      <p className="mt-1 text-sm italic text-muted-foreground">
+                        Not provided
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* LINKEDIN */}
+
+              <div className="rounded-xl border border-border bg-muted/30 p-4">
+                <div className="flex items-center gap-3">
+                  <ExternalLink className="h-4 w-4 shrink-0 text-blue-600" />
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      LinkedIn
+                    </p>
+
+                    {contactCompany.linkedinUrl ? (
+                      <a
+                        href={
+                          contactCompany.linkedinUrl.startsWith(
+                            "http"
+                          )
+                            ? contactCompany.linkedinUrl
+                            : `https://${contactCompany.linkedinUrl}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) =>
+                          e.stopPropagation()
+                        }
+                        className="
+                          mt-1
+                          block
+                          truncate
+                          text-sm
+                          font-medium
+                          text-blue-600
+                          hover:underline
+                        "
+                      >
+                        {contactCompany.linkedinUrl}
+                      </a>
+                    ) : (
+                      <p className="mt-1 text-sm italic text-muted-foreground">
+                        Not provided
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* EMAIL */}
+
+              <div className="rounded-xl border border-border bg-muted/30 p-4">
+                <div className="flex items-center gap-3">
+                  <Mail className="h-4 w-4 shrink-0 text-amber-600" />
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Email
+                    </p>
+
+                    {contactCompany.email ? (
+                      <a
+                        href={`mailto:${contactCompany.email}`}
+                        onClick={(e) =>
+                          e.stopPropagation()
+                        }
+                        className="
+                          mt-1
+                          block
+                          truncate
+                          text-sm
+                          font-medium
+                          text-foreground
+                          hover:text-amber-600
+                        "
+                      >
+                        {contactCompany.email}
+                      </a>
+                    ) : (
+                      <p className="mt-1 text-sm italic text-muted-foreground">
+                        Not provided
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  setContactOpen(false)
+                }
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
