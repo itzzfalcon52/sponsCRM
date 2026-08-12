@@ -43,6 +43,7 @@ const domains = [
   { value: "HEALTHCARE", label: "Healthcare" },
   { value: "WORKSHOP", label: "Workshop" },
   { value: "MISCELLANEOUS", label: "Miscellaneous" },
+  { value: "HACKATHON", label: "Hackathon/Competition" },
 ];
 
 export default function EditCompanyModal({

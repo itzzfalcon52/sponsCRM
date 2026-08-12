@@ -157,6 +157,8 @@ const sectors = [
       value: "MISCELLANEOUS",
       label: "Miscellaneous",
     },
+    { value: "HACKATHON", label: "Hackathon/Competition" },
+
   ];
 
 // ============================================================

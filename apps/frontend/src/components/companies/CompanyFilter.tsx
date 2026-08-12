@@ -69,6 +69,7 @@ export default function CompanyFilters({
     { value: "HEALTHCARE", label: "Healthcare" },
     { value: "WORKSHOP", label: "Workshop" },
     { value: "MISCELLANEOUS", label: "Miscellaneous" },
+    { value: "HACKATHON", label: "Hackathon/Competition" },
   ];
 
   // ============================================================

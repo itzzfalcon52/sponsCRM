@@ -74,6 +74,10 @@ const domains = [
     value: "MISCELLANEOUS",
     label: "Miscellaneous",
   },
+  {
+    value: "HACKATHON",
+    label: "Hackathon / Competition",
+  },
 ];
 
 const addCompanySchema = z.object({
