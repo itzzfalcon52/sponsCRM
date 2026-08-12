@@ -38,6 +38,7 @@ const DomainSchema = z.enum([
   "HEALTHCARE",
   "WORKSHOP",
   "MISCELLANEOUS",
+  "HACKATHON",
 ]);
 
 const TypeSchema = z.enum(["CASH", "IN_KIND"]).optional();
