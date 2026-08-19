@@ -525,7 +525,7 @@ export default function CompanyFilters({
               IMPORT EXCEL / PASTE
           ================================================== */}
 
-          {isAdmin && (
+          
             <Button
               variant="outline"
               onClick={onImport}
@@ -547,7 +547,7 @@ export default function CompanyFilters({
               <ClipboardPaste className="mr-2 h-4 w-4 shrink-0" />
               Import Excel
             </Button>
-          )}
+          
 
           {/* ==================================================
               ADD COMPANY
