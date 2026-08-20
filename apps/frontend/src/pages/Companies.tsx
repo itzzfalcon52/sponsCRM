@@ -14,19 +14,28 @@ import PasteCompaniesModal from "../components/companies/PasteCompaniesModal";
 import { api } from "../api/axios";
 
 export default function Companies() {
-  // ============================================================
-  // QUERY CLIENT
-  // ============================================================
-
   const queryClient = useQueryClient();
 
   // ============================================================
-  // STATE
+  // PAGINATION
+  // ============================================================
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Keep this consistent with the table UI.
+  const itemsPerPage = 10;
+
+  // ============================================================
+  // FILTERS
   // ============================================================
 
   const [filters, setFilters] = useState<
     Record<string, string>
   >({});
+
+  // ============================================================
+  // MODALS
+  // ============================================================
 
   const [open, setOpen] = useState(false);
 
@@ -44,13 +53,27 @@ export default function Companies() {
     user?.role === "SENIOR";
 
   // ============================================================
+  // SERVER PAGINATION
+  // ============================================================
+
+  const queryFilters = useMemo(
+    () => ({
+      ...filters,
+      page: String(currentPage),
+      limit: String(itemsPerPage),
+    }),
+    [filters, currentPage]
+  );
+
+  // ============================================================
   // COMPANIES
   // ============================================================
 
   const {
     companies,
+    pagination,
     isLoading,
-  } = useCompanies(filters);
+  } = useCompanies(queryFilters);
 
   // ============================================================
   // GOOGLE SHEETS STATUS
@@ -71,6 +94,26 @@ export default function Companies() {
         organization?.lastSyncedAt ?? null,
     };
   }, [user?.organization]);
+
+  // ============================================================
+  // FILTER CHANGE
+  // ============================================================
+
+  const handleFilterChange = (
+    updater: (
+      prev: Record<string, string>
+    ) => Record<string, string>
+  ) => {
+    setFilters((prev) => {
+      const next = updater(prev);
+
+      // Whenever filters change,
+      // go back to page 1.
+      setCurrentPage(1);
+
+      return next;
+    });
+  };
 
   // ============================================================
   // GOOGLE CONNECT
@@ -143,10 +186,6 @@ export default function Companies() {
       const errorCode =
         error?.response?.data?.error;
 
-      // ========================================================
-      // GOOGLE CONNECTION EXPIRED
-      // ========================================================
-
       if (
         status === 401 &&
         errorCode ===
@@ -199,19 +238,12 @@ export default function Companies() {
   // ============================================================
 
   const handleImportSuccess = () => {
-    // Refresh all company queries.
-    //
-    // This covers:
-    // ["companies", filters]
-    //
-    // and:
-    // ["companies", "infinite", filters]
-
     queryClient.invalidateQueries({
       queryKey: ["companies"],
     });
 
-   
+    // Return to first page after import.
+    setCurrentPage(1);
 
     toast.success(
       "Companies imported successfully."
@@ -240,17 +272,15 @@ export default function Companies() {
         ====================================================== */}
 
         <CompanyFilters
-          onChange={setFilters}
+          onChange={handleFilterChange}
           onAdd={() => setOpen(true)}
-
           onConnect={handleConnect}
           onExport={handleExport}
-
           isConnected={googleConnected}
           lastSyncedAt={lastSync}
-
-          
-          onImport={() => setPasteImportOpen(true)}
+          onImport={() =>
+            setPasteImportOpen(true)
+          }
         />
 
         {/* ======================================================
@@ -260,7 +290,10 @@ export default function Companies() {
         {isAdminOrSenior ? (
           <CompanyTable
             companies={companies}
+            pagination={pagination}
             isLoading={isLoading}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
           />
         ) : (
           <MemberCompanyTable
@@ -282,7 +315,7 @@ export default function Companies() {
         />
 
         {/* ======================================================
-            PASTE / IMPORT MODAL
+            IMPORT MODAL
         ====================================================== */}
 
         <PasteCompaniesModal

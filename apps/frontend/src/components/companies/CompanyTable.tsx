@@ -26,6 +26,7 @@ import { toast } from "sonner";
 
 import ActivityModal from "../activity/activityModal";
 import TimelineModal from "../activity/TimelineModal";
+import { useDeleteCompany } from "../../hooks/useCompany";
 
 
 // ============================================================
@@ -96,7 +97,10 @@ function TableSkeleton({
 
 export default function CompanyTable({
   companies = [],
+  pagination,
   isLoading = false,
+  currentPage = 1,
+  onPageChange,
 }: any) {
   // ============================================================
   // BULK ASSIGNMENT
@@ -124,18 +128,17 @@ export default function CompanyTable({
   // PAGINATION
   // ============================================================
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const totalItems =
+  pagination?.total ?? companies.length;
 
-  const itemsPerPage = 10;
+ const totalPages =
+  pagination?.totalPages ??
+  Math.ceil(totalItems / 10);
 
-  const totalPages = Math.ceil(
-    companies.length / itemsPerPage
-  );
+ const pageSize =
+  pagination?.limit ?? 10;
 
-  const paginatedCompanies = companies.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+ 
 
   // ============================================================
   // ACTIVITY / TIMELINE
@@ -161,7 +164,7 @@ export default function CompanyTable({
   // COMPANY MUTATIONS
   // ============================================================
 
-  const { deleteCompany } = useCompanies();
+  const { deleteCompany } = useDeleteCompany();
 
   // ============================================================
   // CLOSE DROPDOWN WHEN CLICKING OUTSIDE
@@ -249,13 +252,13 @@ export default function CompanyTable({
 
   const toggleSelectAll = () => {
     if (
-      selectedIds.length === paginatedCompanies.length &&
-      paginatedCompanies.length > 0
+      selectedIds.length === companies.length &&
+      companies.length > 0
     ) {
       setSelectedIds([]);
     } else {
       setSelectedIds(
-        paginatedCompanies.map(
+        companies.map(
           (company: any) => company.id
         )
       );
@@ -462,7 +465,7 @@ export default function CompanyTable({
               text-muted-foreground
             "
           >
-            {companies.length}
+            {totalItems}
           </span>
         </div>
 
@@ -538,8 +541,8 @@ export default function CompanyTable({
                     type="checkbox"
                     checked={
                       selectedIds.length ===
-                        paginatedCompanies.length &&
-                      paginatedCompanies.length > 0
+                        companies.length &&
+                      companies.length > 0
                     }
                     onChange={toggleSelectAll}
                     disabled={isLoading}
@@ -597,7 +600,7 @@ export default function CompanyTable({
           <tbody className="divide-y divide-border">
             {isLoading ? (
               <TableSkeleton />
-            ) : paginatedCompanies.length === 0 ? (
+            ) : companies.length === 0 ? (
               <tr>
                 <td
                   colSpan={isBulkMode ? 9 : 8}
@@ -613,7 +616,7 @@ export default function CompanyTable({
                 </td>
               </tr>
             ) : (
-              paginatedCompanies.map((c: any) => (
+              companies.map((c: any) => (
                 <tr
                   key={c.id}
                   className={`
@@ -1047,135 +1050,141 @@ export default function CompanyTable({
       </div>
 
       {/* ========================================================
-          PAGINATION
-      ======================================================== */}
+    PAGINATION
+======================================================== */}
 
-      <div
+<div
+  className="
+    flex
+    items-center
+    justify-between
+    rounded-b-xl
+    border-t
+    border-border
+    bg-muted/40
+    px-6
+    py-4
+  "
+>
+  <p className="text-sm text-muted-foreground">
+    Showing{" "}
+    <span className="font-medium text-foreground">
+      {totalItems === 0
+        ? 0
+        : (currentPage - 1) * pageSize + 1}
+    </span>{" "}
+    to{" "}
+    <span className="font-medium text-foreground">
+      {Math.min(
+        currentPage * pageSize,
+        totalItems
+      )}
+    </span>{" "}
+    of{" "}
+    <span className="font-medium text-foreground">
+      {totalItems}
+    </span>{" "}
+    results
+  </p>
+
+  {totalPages > 1 && (
+    <div className="flex items-center gap-4">
+
+      {/* Previous */}
+
+      <Button
+        variant="outline"
+        size="sm"
         className="
-          flex
-          items-center
-          justify-between
-          rounded-b-xl
-          border-t border-border
-          bg-muted/40
-          px-6 py-4
+          h-8
+          gap-1
+          border-border
+          bg-background
+          font-medium
+          shadow-sm
+          hover:bg-muted
         "
+        disabled={
+          currentPage === 1 ||
+          isLoading
+        }
+        onClick={() =>
+          onPageChange(
+            Math.max(
+              currentPage - 1,
+              1
+            )
+          )
+        }
       >
-        <p className="text-sm text-muted-foreground">
-          Showing{" "}
-          <span className="font-medium text-foreground">
-            {companies.length === 0
-              ? 0
-              : (currentPage - 1) *
-                  itemsPerPage +
-                1}
-          </span>{" "}
-          to{" "}
-          <span className="font-medium text-foreground">
-            {Math.min(
-              currentPage * itemsPerPage,
-              companies.length
-            )}
-          </span>{" "}
-          of{" "}
-          <span className="font-medium text-foreground">
-            {companies.length}
-          </span>{" "}
-          results
-        </p>
+        <ChevronLeft className="-ml-1 h-4 w-4" />
+        Previous
+      </Button>
 
-        {totalPages > 1 && (
-          <div className="flex items-center gap-4">
-            {/* Previous */}
+      {/* Page Numbers */}
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="
-                h-8 gap-1
-                border-border
-                bg-background
-                font-medium
-                shadow-sm
-                hover:bg-muted
-              "
-              disabled={
-                currentPage === 1 || isLoading
-              }
-              onClick={() =>
-                setCurrentPage((prev) =>
-                  Math.max(prev - 1, 1)
-                )
-              }
-            >
-              <ChevronLeft className="-ml-1 h-4 w-4" />
-              Previous
-            </Button>
-
-            {/* Page Numbers */}
-
-            <div className="hidden items-center gap-1 sm:flex">
-              {Array.from({
-                length: totalPages,
-              }).map((_, i) => (
-                <button
-                  key={i}
-                  disabled={isLoading}
-                  onClick={() =>
-                    setCurrentPage(i + 1)
-                  }
-                  className={`
-                    h-8 w-8
-                    rounded-md
-                    text-sm
-                    font-medium
-                    transition-colors
-                    ${
-                      currentPage === i + 1
-                        ? "bg-indigo-600 text-white shadow-sm"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }
-                    disabled:opacity-50
-                  `}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-
-            {/* Next */}
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="
-                h-8 gap-1
-                border-border
-                bg-background
-                font-medium
-                shadow-sm
-                hover:bg-muted
-              "
-              disabled={
-                currentPage === totalPages ||
-                isLoading
-              }
-              onClick={() =>
-                setCurrentPage((prev) =>
-                  Math.min(
-                    prev + 1,
-                    totalPages
-                  )
-                )
-              }
-            >
-              Next
-              <ChevronRight className="-mr-1 h-4 w-4" />
-            </Button>
-          </div>
-        )}
+      <div className="flex items-center gap-1">
+        {Array.from(
+          { length: totalPages },
+          (_, index) => index + 1
+        ).map((page) => (
+          <Button
+            key={page}
+            variant={
+              page === currentPage
+                ? "default"
+                : "outline"
+            }
+            size="sm"
+            disabled={isLoading}
+            onClick={() =>
+              onPageChange(page)
+            }
+            className="
+              h-8
+              min-w-8
+              px-2
+            "
+          >
+            {page}
+          </Button>
+        ))}
       </div>
 
+      {/* Next */}
+
+      <Button
+        variant="outline"
+        size="sm"
+        className="
+          h-8
+          gap-1
+          border-border
+          bg-background
+          font-medium
+          shadow-sm
+          hover:bg-muted
+        "
+        disabled={
+          currentPage >= totalPages ||
+          isLoading
+        }
+        onClick={() =>
+          onPageChange(
+            Math.min(
+              currentPage + 1,
+              totalPages
+            )
+          )
+        }
+      >
+        Next
+        <ChevronRight className="-mr-1 h-4 w-4" />
+      </Button>
+
+    </div>
+  )}
+</div>
       {/* ========================================================
           MODALS
       ======================================================== */}

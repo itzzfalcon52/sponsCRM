@@ -8,6 +8,7 @@ import companyRoutes from "./routes/companyRoutes.js";
 import activityRoute from "./routes/activityRoute.js";
 import exportRoute from "./routes/exportRoute.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
 import helmet from "helmet";
 import hpp from "hpp";
 
@@ -67,5 +68,6 @@ app.use("/api/v1/companies", companyRoutes);
 app.use("/api/v1/activities", activityRoute);
 app.use("/api/v1/google", exportRoute);
 app.use("/api/v1/notifications", notificationRoutes);
+app.use("/api/v1/dashboard", dashboardRoutes);
 
 export default app;
