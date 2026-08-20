@@ -16,16 +16,8 @@ export const useCompanies = (filters?: any) => {
   const isAdminOrSenior =
     user?.role === "ADMIN" || user?.role === "SENIOR";
 
-  // ============================================================
-  // QUERY KEYS
-  // ============================================================
-
   const baseQueryKey = ["companies"];
   const queryKey = ["companies", filters];
-
-  // ============================================================
-  // FETCH COMPANIES
-  // ============================================================
 
   const { data, isLoading } = useQuery({
     queryKey,
@@ -37,7 +29,6 @@ export const useCompanies = (filters?: any) => {
 
     enabled: !!user?.organization,
 
-    // Prevent UI flashing while changing filters
     placeholderData: (previousData) => previousData,
   });
 
@@ -157,7 +148,11 @@ export const useCompanies = (filters?: any) => {
 
   return {
     companies: data?.data || [],
+
+    // IMPORTANT:
+    // Keep the backend pagination information.
     pagination: data?.pagination,
+
     isLoading,
 
     createCompany: createMutation.mutate,
@@ -201,7 +196,6 @@ export const useInfiniteCompanies = (filters: any) => {
             limit: 20,
           }),
 
-    // TanStack Query v5
     initialPageParam: 1,
 
     getNextPageParam: (lastPage: any) => {
@@ -226,13 +220,11 @@ export const useInfiniteCompanies = (filters: any) => {
   });
 
   return {
-    // Flatten all pages
     companies:
       data?.pages.flatMap(
         (page) => page.data
       ) || [],
 
-    // Total number of companies
     totalItems:
       data?.pages[0]?.pagination?.total || 0,
 
@@ -240,5 +232,32 @@ export const useInfiniteCompanies = (filters: any) => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+  };
+};
+
+
+export const useDeleteCompany = () => {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: companyApi.deleteCompany,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["companies"],
+      });
+    },
+
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        "Failed to delete company.";
+
+      toast.error(message);
+    },
+  });
+
+  return {
+    deleteCompany: mutation.mutate,
   };
 };

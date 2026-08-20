@@ -28,7 +28,11 @@ import {
 } from "recharts";
 
 export default function MemberDashboard() {
-  const { companies, isLoading: companiesLoading } = useCompanies();
+  const {
+    companies,
+    pagination,
+    isLoading: companiesLoading,
+  } = useCompanies();
 
   // ============================================================
   // LOADING
@@ -62,7 +66,7 @@ export default function MemberDashboard() {
     safeCompanies = (companies as any).data;
   }
 
-  const total = safeCompanies.length;
+  const total = pagination?.total ?? safeCompanies.length;
 
   // ============================================================
   // STATUS COUNTS

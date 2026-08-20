@@ -9,6 +9,13 @@ const server = app.listen(port, () => {
   console.log(`🚀 App running on port ${port}...`);
 });
 
+console.log(
+  "DATABASE HOST:",
+  process.env.DATABASE_URL
+    ?.split("@")[1]
+    ?.split("/")[0]
+);
+
 process.on("unhandledRejection", (err: unknown) => {
   console.log("UNHANDLED REJECTION! 💥 Shutting down...");
 
