@@ -9,8 +9,11 @@ import {
   Link2,
   Loader2,
   ClipboardPaste,
+  UserPlus,
 } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { companyApi } from "../../api/companyApi";
 import { toast } from "sonner";
 import { useAuthStore } from "../../stores/authstore";
 
@@ -46,8 +49,17 @@ export default function CompanyFilters({
 }: CompanyFiltersProps) {
   const [loading, setLoading] = useState(false);
 
-  const user = useAuthStore((s) => s.user) as any;
+  const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === "ADMIN";
+  const {
+    data: creators,
+    isLoading: creatorsLoading,
+    isError: creatorsError,
+  } = useQuery({
+    queryKey: ["companies", "creators", user?.organization?.id, user?.id, user?.role],
+    queryFn: companyApi.getCompanyCreators,
+    enabled: !!user?.organization,
+  });
 
   const domains = [
     { value: "EDTECH", label: "EdTech" },
@@ -352,6 +364,31 @@ export default function CompanyFilters({
               text-muted-foreground
             "
           />
+        </div>
+
+        <div className="group relative">
+          <UserPlus className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <select
+            aria-label="Added by"
+            defaultValue=""
+            disabled={creatorsLoading || creatorsError}
+            onChange={(e) => handleChange("createdBy", e.target.value)}
+            className="max-w-64 appearance-none cursor-pointer rounded-lg border border-input bg-background py-2.5 pl-9 pr-9 text-sm font-medium text-foreground shadow-sm transition-all hover:border-primary/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-wait disabled:opacity-60 [&>option]:bg-background [&>option]:text-foreground"
+          >
+            <option value="">
+              {creatorsLoading
+                ? "Loading members..."
+                : creatorsError
+                  ? "Unable to load members"
+                  : "Added by: All members"}
+            </option>
+            {creators?.data.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.name?.trim() || member.email}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         </div>
       </div>
 

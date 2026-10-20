@@ -6,6 +6,13 @@ export const companyApi = {
     return res.data;
   },
 
+  getCompanyCreators: async (): Promise<{
+    data: { id: string; name: string | null; email: string }[];
+  }> => {
+    const res = await api.get("/companies/creators");
+    return res.data;
+  },
+
   getMyCompanies: async (params?:any) => {
     const res = await api.get("/companies/me",{params});
     return res.data;

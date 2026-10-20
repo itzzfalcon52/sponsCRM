@@ -249,6 +249,7 @@ export const listCompaniesSchema = z.object({
     status: StatusSchema.optional(),
     domain: DomainSchema.optional(),
     assignedTo: z.string().optional(),
+    createdBy: z.string().pipe(z.uuid()).optional(),
   
     page: z.coerce.number().min(1).default(1),
     limit: z.coerce.number().min(1).max(100).default(20),
@@ -257,11 +258,28 @@ export const listCompaniesSchema = z.object({
 
 export type ListCompaniesInput = z.infer<typeof listCompaniesSchema>;
 
+export const getCompanyCreators = async (orgId: string, memberId?: string) => {
+  return prisma.user.findMany({
+    where: {
+      createdCompanies: {
+        some: {
+          orgId,
+          ...(memberId
+            ? { OR: [{ assignedToId: memberId }, { createdById: memberId }] }
+            : {}),
+        },
+      },
+    },
+    select: { id: true, name: true, email: true },
+    orderBy: [{ name: "asc" }, { email: "asc" }],
+  });
+};
+
 export const listCompanies = async (
     orgId: string,
     input: Partial<ListCompaniesInput> = {}
   ) => {
-    const { q, status, domain, assignedTo, page, limit } =
+    const { q, status, domain, assignedTo, createdBy, page, limit } =
       listCompaniesSchema.parse(input);
   
     const skip = (page - 1) * limit;
@@ -271,6 +289,7 @@ export const listCompanies = async (
       status: status ?? undefined,
       domain: domain ?? undefined,
       assignedToId: assignedTo ?? undefined,
+      createdById: createdBy,
       OR: q ? [
         { name: { contains: q, mode: "insensitive" as Prisma.QueryMode } },
         { contactName: { contains: q, mode: "insensitive" as Prisma.QueryMode } },
@@ -299,6 +318,14 @@ export const listCompanies = async (
               id: true,
               name: true
             }
+          },
+          createdById: true,
+          createdBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
           },
           createdAt: true,
           lastContactedAt:true,
@@ -382,7 +409,7 @@ export const getMyCompanies = async (
   orgId: string,
   input: Partial<ListCompaniesInput> = {}
 ) => {
-  const { status, domain, page, limit, q } =
+  const { status, domain, createdBy, page, limit, q } =
     listCompaniesSchema.parse(input);
 
   const skip = (page - 1) * limit;
@@ -400,6 +427,7 @@ export const getMyCompanies = async (
 
     status: status ?? undefined,
     domain: domain ?? undefined,
+    createdById: createdBy,
 
     ...(q
       ? {

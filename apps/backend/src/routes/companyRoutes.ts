@@ -3,6 +3,7 @@ import {
   createCompanyController,
   getCompanyController,
   listCompaniesController,
+  companyCreatorsController,
   updateCompanyController,
   deleteCompanyController,
   myCompaniesController,
@@ -46,6 +47,7 @@ router.post(
 );
 
 router.get("/me", myCompaniesController);
+router.get("/creators", companyCreatorsController);
 
 
 router.get("/", listCompaniesController);

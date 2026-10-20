@@ -15,8 +15,6 @@ import {
   Clock,
 } from "lucide-react";
 
-import { useCompanies } from "../../hooks/useCompany";
-
 import AssignModal from "./AssignModal";
 import EditCompanyModal from "./EditCompanyModal";
 import { getStatusColor } from "./CompanyTableUtils";
@@ -80,6 +78,14 @@ function TableSkeleton({
               <div className="h-7 w-7 rounded-full bg-muted" />
               <div className="h-4 w-20 rounded bg-muted" />
             </div>
+          </td>
+
+          <td className="px-6 py-4">
+            <div className="h-4 w-20 rounded bg-muted" />
+          </td>
+
+          <td className="px-6 py-4">
+            <div className="h-4 w-24 rounded bg-muted" />
           </td>
 
           <td className="px-6 py-4">
@@ -586,6 +592,10 @@ export default function CompanyTable({
               </th>
 
               <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider">
+                Added by
+              </th>
+
+              <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider">
                 Last Contacted
               </th>
 
@@ -599,11 +609,11 @@ export default function CompanyTable({
 
           <tbody className="divide-y divide-border">
             {isLoading ? (
-              <TableSkeleton />
+              <TableSkeleton isBulkMode={isBulkMode} />
             ) : companies.length === 0 ? (
               <tr>
                 <td
-                  colSpan={isBulkMode ? 9 : 8}
+                  colSpan={isBulkMode ? 10 : 9}
                   className="px-6 py-12 text-center"
                 >
                   <div className="font-medium text-muted-foreground">
@@ -844,6 +854,15 @@ export default function CompanyTable({
                         Unassigned
                       </span>
                     )}
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <span
+                      className="whitespace-nowrap text-sm font-medium text-foreground"
+                      title={c.createdBy?.email}
+                    >
+                      {c.createdBy?.name?.trim() || c.createdBy?.email || "Unknown"}
+                    </span>
                   </td>
 
                   {/* LAST CONTACTED */}
