@@ -6,7 +6,10 @@ import {
   User,
 } from "lucide-react";
 
-function CompanyCard({ company }: { company: any }) {
+function CompanyCard({ company, onStatusChange }: {
+  company: any;
+  onStatusChange?: (companyId: string, status: string) => void;
+}) {
   const followUp = company.nextFollowUp
     ? new Date(company.nextFollowUp)
     : null;
@@ -246,6 +249,22 @@ function CompanyCard({ company }: { company: any }) {
           </div>
         )}
       </div>
+      {onStatusChange && (
+        <label className="mt-3 flex items-center gap-2 border-t border-border pt-3 text-xs font-medium text-muted-foreground lg:hidden [@media(pointer:coarse)]:flex">
+          Stage
+          <select
+            aria-label={`Stage for ${company.name}`}
+            value={company.status}
+            onChange={(event) => onStatusChange(company.id, event.target.value)}
+            onPointerDown={(event) => event.stopPropagation()}
+            className="min-w-0 flex-1 rounded-lg border border-input bg-background px-2 py-2 text-foreground"
+          >
+            {["NOT_CONTACTED", "CONTACTED", "IN_TALKS", "NEGOTIATING", "POSITIVE", "REJECTED", "CLOSED"].map((status) => (
+              <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
+            ))}
+          </select>
+        </label>
+      )}
     </div>
   );
 }

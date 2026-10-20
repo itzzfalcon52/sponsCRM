@@ -146,7 +146,7 @@ export default function NotificationTray() {
         align="end"
         sideOffset={8}
         className="
-          w-80
+          w-[min(24rem,calc(100vw-1rem))]
           overflow-hidden
           rounded-2xl
           border

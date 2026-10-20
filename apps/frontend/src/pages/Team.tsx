@@ -141,7 +141,7 @@ export default function Team() {
   return (
     <div
       className="
-        p-6
+        p-4 sm:p-6
         max-w-6xl
         mx-auto
         space-y-6
@@ -255,7 +255,7 @@ export default function Team() {
           e.stopPropagation()
         }
       >
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" role="region" aria-label="Team members table" tabIndex={0}>
           <table className="w-full text-sm text-left">
             {/* ==================================================
                 TABLE HEADER

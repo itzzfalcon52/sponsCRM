@@ -202,7 +202,7 @@ export default function Activities() {
         min-h-full
         bg-background
         text-foreground
-        p-6
+        p-4 sm:p-6
         max-w-7xl
         mx-auto
         space-y-8
@@ -219,7 +219,7 @@ export default function Activities() {
         <div>
           <h1
             className="
-              text-3xl
+              text-2xl sm:text-3xl
               font-bold
               tracking-tight
               text-foreground
@@ -450,7 +450,7 @@ export default function Activities() {
               border-border
               rounded-xl
               shadow-sm
-              p-6
+              p-4 sm:p-6
               relative
               overflow-hidden
             "

@@ -433,14 +433,14 @@ export default function PasteCompaniesModal({
   // ============================================================
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/50 p-2 sm:p-4 backdrop-blur-sm">
+      <div role="dialog" aria-modal="true" aria-label="Import Companies" className="flex max-h-[calc(100dvh-1rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
 
         {/* ======================================================
             HEADER
         ====================================================== */}
 
-        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 sm:px-6 py-4">
           <div>
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
@@ -479,7 +479,7 @@ export default function PasteCompaniesModal({
               LEFT: PASTE AREA
           ==================================================== */}
 
-          <div className="border-b border-border p-6 lg:border-b-0 lg:border-r">
+          <div className="border-b border-border p-4 sm:p-6 lg:border-b-0 lg:border-r">
             <div className="mb-3">
               <h3 className="text-sm font-semibold text-foreground">
                 Paste Excel Rows
@@ -515,7 +515,7 @@ export default function PasteCompaniesModal({
               disabled={isImporting}
               placeholder={`Medibuddy\tDevidutta Pattnaik\t\t7799988877\tdevi@gmail.com
 Company B\tJohn Doe\thttps://linkedin.com/in/johndoe\t9876543210\tjohn@example.com`}
-              className="min-h-[280px] w-full resize-none rounded-xl border border-border bg-background p-4 font-mono text-xs text-foreground shadow-sm outline-none transition-all placeholder:text-muted-foreground/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-[280px] w-full resize-none rounded-xl border border-border bg-background p-2 sm:p-4 font-mono text-xs text-foreground shadow-sm outline-none transition-all placeholder:text-muted-foreground/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-60"
               spellCheck={false}
             />
 
@@ -542,7 +542,7 @@ Company B\tJohn Doe\thttps://linkedin.com/in/johndoe\t9876543210\tjohn@example.c
               RIGHT: PREVIEW
           ==================================================== */}
 
-          <div className="min-h-0 p-6">
+          <div className="min-h-0 p-4 sm:p-6">
             <div className="mb-3">
               <h3 className="text-sm font-semibold text-foreground">
                 Import Preview
@@ -592,7 +592,7 @@ Company B\tJohn Doe\thttps://linkedin.com/in/johndoe\t9876543210\tjohn@example.c
 
             {parsedCompanies.length ===
               0 ? (
-              <div className="flex min-h-[260px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 px-6 text-center">
+              <div className="flex min-h-[260px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 px-4 sm:px-6 text-center">
                 <ClipboardPaste className="mb-3 h-8 w-8 text-muted-foreground/40" />
 
                 <p className="text-sm font-medium text-muted-foreground">
@@ -769,7 +769,7 @@ Company B\tJohn Doe\thttps://linkedin.com/in/johndoe\t9876543210\tjohn@example.c
             FOOTER
         ====================================================== */}
 
-        <div className="flex items-center justify-between border-t border-border bg-muted/20 px-6 py-4">
+        <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center border-t border-border bg-muted/20 px-4 sm:px-6 py-4">
           <div className="text-xs text-muted-foreground">
             {validCompanies.length > 0
               ? `${validCompanies.length} company${
@@ -780,7 +780,7 @@ Company B\tJohn Doe\thttps://linkedin.com/in/johndoe\t9876543210\tjohn@example.c
               : "No valid companies yet"}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
             <button
               type="button"
               onClick={handleClose}

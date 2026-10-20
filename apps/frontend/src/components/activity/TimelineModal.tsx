@@ -168,7 +168,7 @@ export default function TimelineModal({
                     border-b
                     border-border
                     bg-muted/40
-                    px-6
+                    px-4 sm:px-6
                     py-4
                   "
                 >
@@ -237,9 +237,9 @@ export default function TimelineModal({
 
                 <div
                   className="
-                    max-h-[60vh]
+                    max-h-[60dvh]
                     overflow-y-auto
-                    px-6
+                    px-4 sm:px-6
                     py-6
                   "
                 >

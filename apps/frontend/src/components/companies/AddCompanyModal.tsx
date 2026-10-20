@@ -327,10 +327,10 @@ export default function AddCompanyModal({
     >
       <DialogContent
         className="
-          sm:max-w-[620px]
+          max-h-[calc(100dvh-1rem)] sm:max-w-[620px] flex flex-col
           gap-0
           overflow-hidden
-          rounded-[3rem]
+          rounded-2xl sm:rounded-[3rem]
           border
           border-border
           bg-card
@@ -353,9 +353,9 @@ export default function AddCompanyModal({
             from-indigo-600
             via-indigo-700
             to-indigo-800
-            px-12
-            pb-10
-            pt-12
+            px-5 sm:px-12
+            pb-5 sm:pb-10
+            pt-6 sm:pt-12
             text-white
           "
         >
@@ -365,7 +365,7 @@ export default function AddCompanyModal({
             <Building2 className="h-32 w-32 rotate-12" />
           </div>
 
-          <div className="relative z-10 flex items-center gap-6">
+          <div className="relative z-10 flex items-center gap-3 sm:gap-6">
             <div
               className="
                 flex
@@ -392,7 +392,7 @@ export default function AddCompanyModal({
             <div className="space-y-1">
               <DialogTitle
                 className="
-                  text-3xl
+                  text-xl sm:text-3xl
                   font-black
                   tracking-tight
                   text-white
@@ -421,12 +421,12 @@ export default function AddCompanyModal({
 
         <div
           className="
-            max-h-[60vh]
+            min-h-0 flex-1 max-h-[55dvh] sm:max-h-[60vh]
             space-y-10
             overflow-y-auto
             bg-muted/20
-            px-12
-            py-10
+            px-5 sm:px-12
+            py-4 sm:py-10
           "
         >
           {/* ====================================================
@@ -588,7 +588,7 @@ export default function AddCompanyModal({
 
             {/* CONTACT + DOMAIN */}
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:gap-6 sm:grid-cols-2">
               {/* CONTACT */}
 
               <div className="space-y-3">
@@ -715,7 +715,7 @@ export default function AddCompanyModal({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:gap-6 sm:grid-cols-2">
 
   {/* PHONE */}
 
@@ -839,7 +839,7 @@ export default function AddCompanyModal({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:gap-6 sm:grid-cols-2">
               {/* AMOUNT */}
 
               <div className="space-y-3">
@@ -1014,15 +1014,15 @@ export default function AddCompanyModal({
 
         <DialogFooter
           className="
-            flex
+            mx-0 mb-0 flex flex-col-reverse sm:flex-row shrink-0 [&>button]:w-full sm:[&>button]:w-auto
             items-center
             justify-between
-            gap-6
+            gap-3 sm:gap-6
             border-t
             border-border
             bg-card
-            px-12
-            py-10
+            px-5 sm:px-12
+            py-4 sm:py-10
           "
         >
           {/* DISCARD */}

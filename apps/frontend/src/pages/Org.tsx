@@ -74,7 +74,7 @@ export default function Org() {
  
   // View : User is NOT in an Organization
   return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-slate-50 selection:bg-indigo-100">
+    <div className="min-h-[80vh] flex flex-col items-center justify-center p-4 sm:p-6 bg-slate-50 selection:bg-indigo-100">
       
       <div className="text-center mb-10 space-y-3">
         <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-2">
@@ -88,9 +88,9 @@ export default function Org() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8 w-full max-w-4xl">
         {/* Create Org Card */}
-        <div className="bg-white p-8 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col justify-between">
+        <div className="bg-white p-5 sm:p-8 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col justify-between">
           <div className="space-y-4 mb-8">
             <div className="h-12 w-12 rounded-lg bg-indigo-50 flex items-center justify-center border border-indigo-100">
               <Plus className="h-6 w-6 text-indigo-600" />
@@ -119,7 +119,7 @@ export default function Org() {
         </div>
 
         {/* Join Org Card */}
-        <div className="bg-white p-8 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col justify-between">
+        <div className="bg-white p-5 sm:p-8 rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col justify-between">
           <div className="space-y-4 mb-8">
             <div className="h-12 w-12 rounded-lg bg-purple-50 flex items-center justify-center border border-purple-100">
               <Key className="h-6 w-6 text-purple-600" />
