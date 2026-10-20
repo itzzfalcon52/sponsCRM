@@ -258,14 +258,14 @@ export default function MemberDashboard() {
   // ============================================================
 
   return (
-    <div className="min-h-screen flex-1 space-y-6 bg-background p-8 text-foreground">
+    <div className="min-h-full flex-1 space-y-6 bg-background p-4 sm:p-8 text-foreground">
 
       {/* ========================================================
           PAGE HEADER
       ======================================================== */}
 
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
           My Workspace
         </h2>
       </div>
@@ -382,7 +382,7 @@ export default function MemberDashboard() {
 
         {/* Pipeline */}
 
-        <Card className="col-span-4 border-border bg-card shadow-sm">
+        <Card className="min-w-0 md:col-span-1 lg:col-span-4 border-border bg-card shadow-sm">
 
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-card-foreground">
@@ -458,7 +458,7 @@ export default function MemberDashboard() {
 
         {/* Secured Values */}
 
-        <Card className="col-span-3 border-border bg-card shadow-sm">
+        <Card className="min-w-0 md:col-span-1 lg:col-span-3 border-border bg-card shadow-sm">
 
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-card-foreground">
@@ -567,7 +567,7 @@ export default function MemberDashboard() {
 
         {/* Assigned Companies */}
 
-        <Card className="col-span-4 border-border bg-card shadow-sm">
+        <Card className="min-w-0 md:col-span-1 lg:col-span-4 border-border bg-card shadow-sm">
 
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-card-foreground">
@@ -662,7 +662,7 @@ export default function MemberDashboard() {
 
         {/* Upcoming Follow-ups */}
 
-        <Card className="col-span-3 border-border bg-card shadow-sm">
+        <Card className="min-w-0 md:col-span-1 lg:col-span-3 border-border bg-card shadow-sm">
 
           <CardHeader className="flex flex-row items-center justify-between">
 

@@ -215,10 +215,10 @@ export default function AdminDashboard() {
     <div
       className="
         flex-1
-        min-h-screen
+        min-h-full
         space-y-6
         bg-background
-        p-8
+        p-4 sm:p-8
         text-foreground
       "
     >
@@ -229,7 +229,7 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between space-y-2">
         <h2
           className="
-            text-3xl
+            text-2xl sm:text-3xl
             font-bold
             tracking-tight
             text-foreground
@@ -491,7 +491,7 @@ export default function AdminDashboard() {
 
         {/* PIPELINE */}
 
-        <Card className="col-span-4 border-border bg-card shadow-sm">
+        <Card className="min-w-0 md:col-span-1 lg:col-span-4 border-border bg-card shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-bold text-card-foreground">
               Pipeline Velocity
@@ -575,7 +575,7 @@ export default function AdminDashboard() {
 
         {/* FINANCIAL SPLIT */}
 
-        <Card className="col-span-3 border-border bg-card shadow-sm">
+        <Card className="min-w-0 md:col-span-1 lg:col-span-3 border-border bg-card shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-bold text-card-foreground">
               Financial Split
@@ -670,7 +670,7 @@ export default function AdminDashboard() {
 
         {/* PORTFOLIO OVERVIEW */}
 
-        <Card className="col-span-4 overflow-hidden border-border bg-card shadow-sm">
+        <Card className="min-w-0 md:col-span-1 lg:col-span-4 overflow-hidden border-border bg-card shadow-sm">
           <CardHeader className="border-b bg-card">
             <CardTitle className="text-lg font-bold text-card-foreground">
               Portfolio Overview
@@ -680,7 +680,7 @@ export default function AdminDashboard() {
           <CardContent className="p-0">
             <div className="divide-y divide-slate-100">
               {companies.length === 0 ? (
-                <p className="p-8 text-center text-sm text-muted-foreground">
+                <p className="p-4 sm:p-8 text-center text-sm text-muted-foreground">
                   No portfolio data found.
                 </p>
               ) : (
@@ -766,7 +766,7 @@ export default function AdminDashboard() {
 
         {/* TEAM WORKLOAD */}
 
-        <Card className="col-span-3 overflow-hidden border-border bg-card shadow-sm">
+        <Card className="min-w-0 md:col-span-1 lg:col-span-3 overflow-hidden border-border bg-card shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between border-b bg-card">
             <CardTitle className="text-lg font-bold text-card-foreground">
               Team Workload
@@ -778,7 +778,7 @@ export default function AdminDashboard() {
           <CardContent className="p-0">
             <div className="divide-y divide-slate-100">
               {memberStats.length === 0 ? (
-                <p className="p-8 text-center text-sm text-muted-foreground">
+                <p className="p-4 sm:p-8 text-center text-sm text-muted-foreground">
                   No active team members.
                 </p>
               ) : (

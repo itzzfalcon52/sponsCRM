@@ -350,8 +350,8 @@ export default function MemberCompanyTable({
     <div
       className="
         flex
-        h-[calc(100vh-200px)]
-        min-h-[500px]
+        h-[min(70dvh,700px)] sm:h-[calc(100dvh-200px)]
+        min-h-[420px] sm:min-h-[500px]
         flex-col
         overflow-hidden
         rounded-xl
@@ -367,10 +367,12 @@ export default function MemberCompanyTable({
           TABLE AREA
       ======================================================== */}
 
-      <div className="flex-1 overflow-auto">
+      <p className="border-b border-border px-4 py-2 text-xs text-muted-foreground sm:hidden">Swipe across the table to see all details.</p>
+      <div className="min-h-0 flex-1 overflow-auto overscroll-x-contain" role="region" aria-label="Companies table" tabIndex={0}>
         <table
           className="
             relative
+            min-w-[900px]
             w-full
             border-collapse
             text-left
@@ -973,7 +975,7 @@ export default function MemberCompanyTable({
       ======================================================== */}
 
       <div
-        className="
+        className="responsive-pagination
           flex
           items-center
           justify-between
@@ -1039,7 +1041,8 @@ export default function MemberCompanyTable({
 
             {/* PAGE NUMBERS */}
 
-            <div className="hidden items-center gap-1 sm:flex">
+            <span className="text-xs text-muted-foreground sm:hidden">Page {currentPage} of {totalPages}</span>
+            <div className="hidden max-w-[40vw] items-center gap-1 overflow-x-auto sm:flex">
               {Array.from({
                 length: totalPages,
               }).map((_, i) => (

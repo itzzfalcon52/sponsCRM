@@ -106,9 +106,13 @@ export default function ActivityModal({
       ======================================================== */}
 
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Log Activity"
         className="
           flex
           w-full
+          max-h-[calc(100dvh-1rem)]
           max-w-lg
           flex-col
           overflow-hidden
@@ -133,10 +137,12 @@ export default function ActivityModal({
             flex
             items-center
             justify-between
+            shrink-0
             border-b
+            shrink-0
             border-border
             bg-muted/40
-            px-6
+            px-4 sm:px-6
             py-4
           "
         >
@@ -205,7 +211,7 @@ export default function ActivityModal({
             BODY
         ====================================================== */}
 
-        <div className="space-y-6 px-6 py-6">
+        <div className="min-h-0 overflow-y-auto space-y-6 px-4 sm:px-6 py-4 sm:py-6">
           {/* ====================================================
               ACTIVITY TYPE
           ==================================================== */}
@@ -291,7 +297,8 @@ export default function ActivityModal({
                               dark:text-indigo-300
                             `
                             : `
-                              border-border
+                              shrink-0
+            border-border
                               bg-background
                               text-muted-foreground
 
@@ -420,7 +427,8 @@ export default function ActivityModal({
                 resize-none
                 rounded-xl
                 border
-                border-border
+                shrink-0
+            border-border
                 bg-background
                 p-3.5
                 text-sm
@@ -500,7 +508,8 @@ export default function ActivityModal({
                 w-full
                 rounded-xl
                 border
-                border-border
+                shrink-0
+            border-border
                 bg-background
                 px-3
                 py-2.5
@@ -545,10 +554,12 @@ export default function ActivityModal({
             items-center
             justify-end
             gap-3
+            shrink-0
             border-t
+            shrink-0
             border-border
             bg-muted/40
-            px-6
+            px-4 sm:px-6
             py-4
           "
         >
@@ -558,7 +569,8 @@ export default function ActivityModal({
             disabled={isLoading}
             onClick={onClose}
             className="
-              border-border
+              shrink-0
+            border-border
               bg-background
               text-foreground
 

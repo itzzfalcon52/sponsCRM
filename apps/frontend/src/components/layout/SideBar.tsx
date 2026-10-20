@@ -7,9 +7,10 @@ import {
   Activity,
   Users,
   Building,
+  X,
 } from "lucide-react";
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { user } = useAuthStore();
   const location = useLocation();
 
@@ -48,14 +49,15 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="sticky top-0 flex h-screen w-64 flex-col border-r border-border bg-sidebar text-sidebar-foreground shadow-sm">
+    <div className="sticky top-0 flex h-dvh w-full flex-col border-r border-border bg-sidebar text-sidebar-foreground shadow-sm">
 
       {/* =====================================================
           BRAND HEADER
       ===================================================== */}
 
-      <div className="flex h-16 items-center border-b border-sidebar-border px-6">
+      <div className="flex h-16 shrink-0 items-center justify-between border-b border-sidebar-border px-6">
         <Link
+          onClick={onNavigate}
           to="/"
           className="flex items-center gap-2 text-xl font-bold tracking-tight text-sidebar-foreground transition-opacity hover:opacity-80"
         >
@@ -78,6 +80,11 @@ export default function Sidebar() {
 
           SponsCRM
         </Link>
+        {onNavigate && (
+          <button type="button" onClick={onNavigate} aria-label="Close navigation" className="inline-flex h-11 w-11 items-center justify-center rounded-lg hover:bg-sidebar-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       {/* =====================================================
@@ -127,12 +134,14 @@ export default function Sidebar() {
             const Icon = item.icon;
 
             const isActive =
-              location.pathname === item.path;
+              location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
 
             return (
               <Link
+                onClick={onNavigate}
                 key={item.name}
                 to={item.path}
+                aria-current={isActive ? "page" : undefined}
                 className={`
                   group flex items-center gap-3 rounded-lg
                   px-3 py-2.5
@@ -173,6 +182,7 @@ export default function Sidebar() {
       <div className="border-t border-sidebar-border p-4">
 
         <Link
+          onClick={onNavigate}
           to="/settings"
           className={`
             group flex items-center gap-3

@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Sun,
   Moon,
+  Menu,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import { DialogTrigger } from "@/components/ui/dialog";
 
 import NotificationTray from "../activity/NotificationTray";
 
@@ -96,11 +99,11 @@ export default function Topbar() {
     <header
       className="
         sticky top-0 z-[49]
-        flex h-16 w-full
+        flex h-16 w-full shrink-0 gap-2
         items-center justify-between
         border-b border-border
         bg-background/80
-        px-8
+        px-3 sm:px-6 lg:px-8
         backdrop-blur-xl
         transition-colors
       "
@@ -109,15 +112,20 @@ export default function Topbar() {
           LEFT — ORGANIZATION
       ======================================================== */}
 
-      <div className="flex items-center gap-4">
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 lg:hidden" aria-label="Open navigation">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </DialogTrigger>
         {user?.organization?.name ? (
           <div
             className="
-              group flex items-center gap-3
+              group flex min-w-0 items-center gap-2 sm:gap-3
               rounded-2xl
               border border-border
               bg-card
-              px-3 py-1.5
+              px-2 py-1.5 sm:px-3
               shadow-sm
               transition-all
               hover:border-indigo-300
@@ -129,7 +137,7 @@ export default function Topbar() {
 
             <div
               className="
-                flex h-8 w-8
+                hidden h-8 w-8 shrink-0 sm:flex
                 items-center justify-center
                 rounded-xl
                 bg-indigo-600
@@ -143,10 +151,10 @@ export default function Topbar() {
 
             {/* Organization Name */}
 
-            <div className="flex flex-col">
+            <div className="flex min-w-0 flex-col">
               <span
                 className="
-                  mb-1 text-[9px]
+                  hidden sm:block mb-1 text-[9px]
                   font-black uppercase
                   tracking-widest
                   leading-none
@@ -159,7 +167,7 @@ export default function Topbar() {
 
               <span
                 className="
-                  max-w-[220px]
+                  max-w-[110px] sm:max-w-[220px]
                   truncate
                   text-sm
                   font-bold
@@ -186,7 +194,7 @@ export default function Topbar() {
           RIGHT CONTROLS
       ======================================================== */}
 
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
         {/* ======================================================
             INVITE CODE
         ====================================================== */}
@@ -233,6 +241,7 @@ export default function Topbar() {
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Copy invite code"
               onClick={handleCopyInvite}
               className="
                 h-7 w-7
@@ -254,7 +263,7 @@ export default function Topbar() {
 
         {/* Divider */}
 
-        <div className="mx-1 h-6 w-px bg-border" />
+        <div className="mx-1 hidden h-6 w-px sm:block bg-border" />
 
         {/* ======================================================
             THEME TOGGLE
@@ -301,8 +310,9 @@ export default function Topbar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
+              aria-label="Account menu"
               className="
-                group flex items-center gap-2.5
+                group flex items-center gap-1 sm:gap-2.5
                 rounded-full
                 p-1
                 outline-none
@@ -369,7 +379,7 @@ export default function Topbar() {
 
               <ChevronDown
                 className="
-                  h-3.5 w-3.5
+                  hidden h-3.5 w-3.5 sm:block
                   text-muted-foreground
                   transition-colors
                   group-hover:text-foreground
@@ -467,7 +477,7 @@ export default function Topbar() {
                   <div
                     className="
                       mr-3
-                      flex h-8 w-8
+                      hidden h-8 w-8 shrink-0 sm:flex
                       items-center justify-center
                       rounded-lg
                       bg-muted
@@ -497,6 +507,15 @@ export default function Topbar() {
                 </Link>
               </DropdownMenuItem>
             </div>
+            {isAdmin && inviteCode && (
+              <DropdownMenuItem onSelect={handleCopyInvite} className="mx-1.5 rounded-xl p-3 lg:hidden">
+                <Copy className="mr-2 h-4 w-4" />
+                {copied ? "Copied invite code" : "Copy invite code"}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onSelect={handleLogout} disabled={isLoggingOut} className="mx-1.5 mb-1.5 rounded-xl p-3 text-rose-600 sm:hidden">
+              <LogOut className="mr-2 h-4 w-4" /> Sign Out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -510,7 +529,7 @@ export default function Topbar() {
           onClick={handleLogout}
           disabled={isLoggingOut}
           className="
-            ml-1
+            hidden sm:inline-flex ml-1
             h-9 w-9
             rounded-full
             text-muted-foreground

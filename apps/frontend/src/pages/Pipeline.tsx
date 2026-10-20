@@ -136,6 +136,10 @@ export default function Pipeline() {
 
     if (!companyId) return;
 
+    moveCompany(companyId, newStatus);
+  };
+
+  const moveCompany = (companyId: string, newStatus: string) => {
     updateCompany?.(
       {
         id: companyId,
@@ -169,7 +173,7 @@ export default function Pipeline() {
   return (
     <div
       className="
-        h-screen
+        h-full min-h-0
         flex
         flex-col
         bg-background
@@ -229,9 +233,9 @@ export default function Pipeline() {
 
       <header
         className="
-          px-8
-          pt-8
-          pb-6
+          px-4 sm:px-8
+          pt-4 sm:pt-8
+          pb-4 sm:pb-6
           shrink-0
           flex
           items-center
@@ -344,17 +348,19 @@ export default function Pipeline() {
           KANBAN BOARD
       ======================================================== */}
 
-      <main
+      <main aria-label="Pipeline stages" tabIndex={0}
         className="
+          min-h-0
           flex-1
+          overscroll-x-contain
           overflow-x-auto
           kanban-board-wrapper
-          px-8
-          pb-12
+          px-4 sm:px-8
+          pb-4 sm:pb-12
           pt-6
           flex
           flex-row
-          gap-6
+          gap-4 sm:gap-6
           items-start
         "
       >
@@ -366,6 +372,7 @@ export default function Pipeline() {
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
+            onStatusChange={moveCompany}
           />
         ))}
 
@@ -387,6 +394,7 @@ function KanbanColumn({
   onDragStart,
   onDragOver,
   onDrop,
+  onStatusChange,
 }: any) {
   const {
     companies,
@@ -420,7 +428,7 @@ function KanbanColumn({
         flex
         flex-col
         shrink-0
-        w-[320px]
+        w-[min(320px,calc(100vw-2rem))] sm:w-[320px]
         max-h-full
         bg-card
         rounded-3xl
@@ -541,7 +549,7 @@ function KanbanColumn({
           overflow-y-auto
           px-3
           py-4
-          pb-6
+          pb-4 sm:pb-6
           space-y-4
           column-scroll
           relative
@@ -658,7 +666,8 @@ function KanbanColumn({
                 mt-1
               "
             >
-              Drag a company here
+              <span className="hidden lg:inline">Drag a company here</span>
+              <span className="lg:hidden">Move a deal using its stage selector</span>
             </p>
           </div>
         ) : (
@@ -695,7 +704,7 @@ function KanbanColumn({
                     }
                   `}
                 >
-                  <CompanyCard company={company} />
+                  <CompanyCard company={company} onStatusChange={onStatusChange} />
                 </div>
               )
             )}

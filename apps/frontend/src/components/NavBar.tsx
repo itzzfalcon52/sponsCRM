@@ -10,6 +10,7 @@ import {
   Settings,
   Sun,
   Moon,
+  Menu,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -125,7 +126,7 @@ export default function NavBar() {
           h-16
           items-center
           justify-between
-          px-6
+          px-4
           sm:px-12
         "
       >
@@ -145,7 +146,7 @@ export default function NavBar() {
               flex
               items-center
               gap-2
-              text-2xl
+              text-xl sm:text-2xl
               font-black
               tracking-tighter
               text-foreground
@@ -278,7 +279,28 @@ export default function NavBar() {
             RIGHT SIDE
         ======================================================== */}
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-11 w-11 md:hidden" aria-label="Open site menu">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 md:hidden">
+              {[
+                { to: "/features", label: "Features" },
+                { to: "/pricing", label: "Pricing" },
+                { to: "/about", label: "About" },
+                ...(isAuthenticated
+                  ? [{ to: "/dashboard", label: "Dashboard" }]
+                  : [{ to: "/login", label: "Log in" }, { to: "/register", label: "Sign up Free" }]),
+              ].map((item) => (
+                <DropdownMenuItem key={item.to} asChild>
+                  <Link to={item.to}>{item.label}</Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           {/* ======================================================
               THEME TOGGLE
           ====================================================== */}
@@ -348,7 +370,7 @@ export default function NavBar() {
               <Button
                 asChild
                 className="
-                  rounded-xl
+                  hidden sm:inline-flex rounded-xl
                   bg-foreground
                   px-5
                   font-bold

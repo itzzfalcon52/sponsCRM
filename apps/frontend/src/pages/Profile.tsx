@@ -127,8 +127,8 @@ export default function Profile() {
       className="
         max-w-5xl
         mx-auto
-        py-12
-        px-6
+        py-6 sm:py-12
+        px-4 sm:px-6
         space-y-10
         animate-in
         fade-in
@@ -292,7 +292,7 @@ export default function Profile() {
           MAIN CONTENT
       ======================================================== */}
 
-      <div className="grid lg:grid-cols-3 gap-10">
+      <div className="grid lg:grid-cols-3 gap-6 sm:gap-10">
         {/* ======================================================
             LEFT SIDEBAR
         ====================================================== */}
@@ -633,7 +633,7 @@ export default function Profile() {
               border
               border-border
               rounded-[2rem]
-              p-8
+              p-5 sm:p-8
               shadow-sm
               space-y-8
             "
@@ -801,7 +801,7 @@ export default function Profile() {
               border-rose-200
               dark:border-rose-900/60
               rounded-[2rem]
-              p-8
+              p-5 sm:p-8
               space-y-6
             "
           >

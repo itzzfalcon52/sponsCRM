@@ -428,8 +428,8 @@ export default function CompanyTable({
   return (
     <div
       className="
-        flex h-[calc(100vh-200px)]
-        min-h-[500px]
+        flex h-[min(70dvh,700px)] sm:h-[calc(100dvh-200px)]
+        min-h-[420px] sm:min-h-[500px]
         flex-col
         overflow-hidden
         rounded-xl
@@ -475,7 +475,7 @@ export default function CompanyTable({
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {/* Bulk Toggle */}
 
           <Button
@@ -527,8 +527,9 @@ export default function CompanyTable({
           TABLE
       ======================================================== */}
 
-      <div className="flex-1 overflow-auto">
-        <table className="relative w-full border-collapse text-left text-sm">
+      <p className="border-b border-border px-4 py-2 text-xs text-muted-foreground sm:hidden">Swipe across the table to see all details.</p>
+      <div className="min-h-0 flex-1 overflow-auto overscroll-x-contain" role="region" aria-label="Companies table" tabIndex={0}>
+        <table className="relative min-w-[1100px] w-full border-collapse text-left text-sm">
           {/* TABLE HEADER */}
 
           <thead
@@ -702,6 +703,7 @@ export default function CompanyTable({
                   <td className="px-6 py-4">
                     <button
                       type="button"
+                      aria-label={`Contact information for ${c.name}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         setContactCompany(c);
@@ -1073,7 +1075,7 @@ export default function CompanyTable({
 ======================================================== */}
 
 <div
-  className="
+  className="responsive-pagination
     flex
     items-center
     justify-between
@@ -1142,7 +1144,8 @@ export default function CompanyTable({
 
       {/* Page Numbers */}
 
-      <div className="flex items-center gap-1">
+      <span className="text-xs text-muted-foreground sm:hidden">Page {currentPage} of {totalPages}</span>
+      <div className="hidden max-w-[40vw] items-center gap-1 overflow-x-auto sm:flex">
         {Array.from(
           { length: totalPages },
           (_, index) => index + 1
@@ -1260,6 +1263,7 @@ export default function CompanyTable({
             className="
               w-full
               max-w-md
+              max-h-[calc(100dvh-2rem)] overflow-y-auto
               rounded-2xl
               border border-border
               bg-card

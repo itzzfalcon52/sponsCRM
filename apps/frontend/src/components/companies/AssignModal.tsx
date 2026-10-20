@@ -103,7 +103,7 @@ export default function AssignModal({
 
         <DialogHeader
           className="
-            px-6
+            px-4 sm:px-6
             pt-6
             pb-4
             border-b
@@ -175,7 +175,7 @@ export default function AssignModal({
         <div
           className="
             relative
-            max-h-[50vh]
+            max-h-[50dvh]
             space-y-2.5
             overflow-y-auto
             bg-muted/20

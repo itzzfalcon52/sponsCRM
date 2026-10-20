@@ -152,8 +152,8 @@ export default function EditCompanyModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         className="
-          sm:max-w-[550px]
-          max-h-[90vh]
+          flex flex-col sm:max-w-[550px]
+          max-h-[calc(100dvh-1rem)]
           overflow-hidden
           p-0
           border-border
@@ -208,14 +208,14 @@ export default function EditCompanyModal({
             FORM
         ===================================================== */}
 
-        <div className="max-h-[65vh] overflow-y-auto p-6">
+        <div className="min-h-0 flex-1 max-h-[60dvh] sm:max-h-[65vh] overflow-y-auto p-4 sm:p-6">
           <div className="space-y-5">
 
             {/* =================================================
                 BASIC INFORMATION
             ================================================= */}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
               {/* Company Name */}
               <div className="col-span-2 space-y-1.5 sm:col-span-1">
@@ -328,7 +328,7 @@ export default function EditCompanyModal({
                 CONTACT / CLASSIFICATION
             ================================================= */}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
               {/* Domain */}
               <div className="col-span-2 space-y-1.5 sm:col-span-1">
@@ -812,7 +812,7 @@ export default function EditCompanyModal({
 
         <DialogFooter
           className="
-            flex
+            mx-0 mb-0 flex
             items-center
             justify-end
             gap-3

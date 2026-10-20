@@ -134,17 +134,17 @@ export default function CompanyFilters({
   // ============================================================
 
   return (
-    <div className="flex w-full flex-col gap-5 mb-8 xl:flex-row">
+    <div className="flex w-full min-w-0 flex-col gap-4 mb-6 xl:flex-row">
 
       {/* ======================================================
           LEFT SIDE — FILTERS
       ====================================================== */}
 
-      <div className="flex flex-1 flex-wrap items-center gap-3">
+      <div className="grid min-w-0 flex-1 grid-cols-2 items-center gap-3 sm:flex sm:flex-wrap">
 
         {/* SEARCH */}
 
-        <div className="group relative w-full sm:w-72">
+        <div className="group relative col-span-2 w-full sm:w-72">
           <Search
             className="
               pointer-events-none
@@ -191,9 +191,9 @@ export default function CompanyFilters({
 
         {/* STATUS */}
 
-        <div className="group relative">
+        <div className="group relative min-w-0 [&>select]:w-full sm:[&>select]:w-auto">
           <Filter
-            className="
+            className="max-sm:hidden
               pointer-events-none
               absolute
               left-3
@@ -217,6 +217,7 @@ export default function CompanyFilters({
               )
             }
             className="
+              max-sm:pl-3 max-sm:pr-9
               appearance-none
               cursor-pointer
               rounded-lg
@@ -289,9 +290,9 @@ export default function CompanyFilters({
 
         {/* DOMAIN */}
 
-        <div className="group relative">
+        <div className="group relative min-w-0 [&>select]:w-full sm:[&>select]:w-auto">
           <Briefcase
-            className="
+            className="max-sm:hidden
               pointer-events-none
               absolute
               left-3
@@ -315,6 +316,7 @@ export default function CompanyFilters({
               )
             }
             className="
+              max-sm:pl-3 max-sm:pr-9
               appearance-none
               cursor-pointer
               rounded-lg
@@ -366,14 +368,14 @@ export default function CompanyFilters({
           />
         </div>
 
-        <div className="group relative">
+        <div className="group relative col-span-2 min-w-0 [&>select]:w-full sm:[&>select]:w-auto">
           <UserPlus className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <select
             aria-label="Added by"
             defaultValue=""
             disabled={creatorsLoading || creatorsError}
             onChange={(e) => handleChange("createdBy", e.target.value)}
-            className="max-w-64 appearance-none cursor-pointer rounded-lg border border-input bg-background py-2.5 pl-9 pr-9 text-sm font-medium text-foreground shadow-sm transition-all hover:border-primary/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-wait disabled:opacity-60 [&>option]:bg-background [&>option]:text-foreground"
+            className="max-w-full sm:max-w-64 appearance-none cursor-pointer rounded-lg border border-input bg-background py-2.5 pl-9 pr-9 text-sm font-medium text-foreground shadow-sm transition-all hover:border-primary/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-wait disabled:opacity-60 [&>option]:bg-background [&>option]:text-foreground"
           >
             <option value="">
               {creatorsLoading
@@ -485,7 +487,7 @@ export default function CompanyFilters({
             ACTION BUTTONS
         ==================================================== */}
 
-        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+        <div className="grid w-full grid-cols-2 items-center gap-2 sm:flex sm:w-auto sm:flex-wrap">
 
           {/* GOOGLE */}
 
@@ -495,7 +497,7 @@ export default function CompanyFilters({
                 variant="outline"
                 onClick={onConnect}
                 className="
-                  flex-1
+                  col-span-2 sm:col-span-1 flex-1
                   border-border
                   bg-background
                   font-semibold
@@ -515,7 +517,7 @@ export default function CompanyFilters({
                 onClick={handleExportClick}
                 disabled={loading}
                 className="
-                  flex-1
+                  col-span-2 sm:col-span-1 flex-1
                   border-emerald-500/30
                   bg-emerald-500/5
                   font-semibold
