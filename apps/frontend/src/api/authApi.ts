@@ -7,6 +7,11 @@ export const authApi = {
         return res.data;
     },
 
+    googleSignIn: async (data: { credential: string; currentPassword?: string }) => {
+        const res = await api.post("/auth/google", data);
+        return res.data;
+    },
+
     // 2. Signup
     signUp: async (data: { email: string; password: string; name: string }) => {
         const res = await api.post("/auth/register", data);

@@ -11,6 +11,8 @@ import {
   deleteMe,
 } from "../controllers/authController.js";
 
+import { googleLogin } from "../controllers/googleAuthController.js";
+
 import { protect } from "../middleware.js";
 
 const router = express.Router();
@@ -44,6 +46,7 @@ const authLimiter = rateLimit({
 router.post("/register", authLimiter, register);
 
 router.post("/login", authLimiter, login);
+router.post("/google", authLimiter, googleLogin);
 
 // ============================================================
 // PROTECTED AUTH ROUTES

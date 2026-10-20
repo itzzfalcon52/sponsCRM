@@ -51,9 +51,11 @@ export const loginUser = async (input:LoginInput) => {
           role: true,
           orgId: true,
           password: true,
+          name: true,
+          organization: true,
         },
       });
-    if (!user) {
+    if (!user || !user.password) {
         throw new Error("Invalid email or password");
     }
     
@@ -63,7 +65,7 @@ export const loginUser = async (input:LoginInput) => {
     }
     
     const { password: _, ...safeUser } = user;
-    return safeUser;
+    return { ...safeUser, hasPassword: true };
 }
 
 // 1. Update Profile (Name)
@@ -71,6 +73,7 @@ export const updateUserDetails = async (userId:string, data:any) => {
   return await prisma.user.update({
     where: { id: userId },
     data: { name: data.name },
+    include: { organization: true },
   });
 };
 
@@ -80,7 +83,11 @@ export const updateUserPassword = async (userId:string, currentPassword:string, 
 
   if(!user) throw new Error("User not found");
   
-  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!user.password) throw new Error("This account uses Google sign-in. Manage your password in your Google Account.");
+  const parsed = z.object({
+    currentPassword: z.string().min(6), newPassword: z.string().min(6),
+  }).parse({ currentPassword, newPassword });
+  const isMatch = await bcrypt.compare(parsed.currentPassword, user.password);
   if (!isMatch) throw new Error("Current password incorrect");
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);

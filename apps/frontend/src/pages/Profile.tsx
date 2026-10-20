@@ -366,7 +366,9 @@ export default function Profile() {
                 : "Manage your credentials and keep your account protected."}
             </p>
 
-            {!showPassFields ? (
+            {user?.hasPassword === false ? (
+              <p className="text-sm text-indigo-100">You sign in with Google. Manage your password in your Google Account.</p>
+            ) : !showPassFields ? (
               <Button
                 type="button"
                 variant="secondary"

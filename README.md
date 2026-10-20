@@ -47,6 +47,7 @@ The application includes a React frontend, an Express API, and a PostgreSQL data
 - [Repository structure](#repository-structure)
 - [Quick start](#quick-start)
 - [Environment variables](#environment-variables)
+- [Google sign-in](#google-sign-in)
 - [Google Sheets integration](#google-sheets-integration)
 - [API reference](#api-reference)
 - [Development and verification](#development-and-verification)
@@ -70,6 +71,7 @@ The application includes a React frontend, an Express API, and a PostgreSQL data
 | **Spreadsheet import** | Paste rows copied from Excel or another spreadsheet, preview them, select a domain, and import the batch. |
 | **Duplicate detection** | Receive fuzzy name-match suggestions before adding a company; exact names are unique within an organization. |
 | **Google Sheets** | An administrator can connect Google and manually sync company records into domain-specific spreadsheet tabs. |
+| **Google sign-in** | Optional Google login and signup alongside email/password. Existing users link their account once with their CRM password and keep the same data. |
 | **Team and account settings** | Manage member roles, workspace details, profile information, passwords, and membership. |
 | **Responsive interface** | Use mobile navigation, touch-sized controls, scrollable tables, viewport-aware dialogs, and light/dark themes. |
 
@@ -268,7 +270,8 @@ erDiagram
         String id PK
         String email UK
         String name
-        String password
+        String password "nullable for Google-only accounts"
+        String googleId "nullable, unique"
         Role role
         String orgId FK
     }
@@ -466,6 +469,7 @@ No preconfigured demo login or database seed is included.
 | `JWT_COOKIE_EXPIRES_IN` | Yes | Cookie lifetime in days, for example `7`. |
 | `PORT` | No | Server port; defaults to `3000`. |
 | `NODE_ENV` | No | Use `development` locally and `production` on the hosted backend. Production enables secure session cookies. |
+| `GOOGLE_SIGN_IN_CLIENT_ID` | For Google login | Public web OAuth client ID; must exactly match the frontend sign-in client ID. No client secret is required for login. |
 | `GOOGLE_CLIENT_ID` | For Sheets | Google OAuth client ID. |
 | `GOOGLE_CLIENT_SECRET` | For Sheets | Google OAuth client secret. |
 | `GOOGLE_REDIRECT_URI` | For Sheets | Callback URL ending in `/api/v1/google/callback`. |
@@ -475,8 +479,57 @@ No preconfigured demo login or database seed is included.
 | Variable | Purpose |
 | --- | --- |
 | `VITE_API_URL` | Complete API base, including `/api/v1`. Defaults to `http://localhost:3000/api/v1`. |
+| `VITE_GOOGLE_SIGN_IN_CLIENT_ID` | Optional public web OAuth client ID, matching backend `GOOGLE_SIGN_IN_CLIENT_ID`. Without it, Google buttons are hidden and password login remains available. |
 
-Vite embeds its environment configuration at build time. Rebuild the frontend after changing `VITE_API_URL`. Frontend environment values are visible to the browser; server secrets belong only in the backend environment.
+Vite embeds its environment configuration at build time. Rebuild the frontend after changing either frontend environment variable. Frontend environment values are visible to the browser; server secrets belong only in the backend environment.
+
+## Google sign-in
+
+Google sign-in uses Google Identity Services and the existing SponsCRM sessions. It does not require Clerk, replace the user database, or request access to Sheets/Drive. Email/password login remains available.
+
+### Configure Google
+
+1. In Google Cloud / Google Auth Platform, configure the consent screen and create an OAuth client of type **Web application**. A separate client from Sheets makes the two integrations easier to manage.
+2. Add your frontend origins under **Authorized JavaScript origins**: `http://localhost:5173`, `https://www.sponscrm.tech`, `https://sponscrm.tech`, and your Vercel origin if you use it. Origins have no path. Only add domains you control.
+3. Set backend `GOOGLE_SIGN_IN_CLIENT_ID` and frontend `VITE_GOOGLE_SIGN_IN_CLIENT_ID` to that same client ID. The frontend value is public. No client secret or backend redirect URI is needed for this popup flow.
+4. While the Google consent app is in testing, add the intended Google accounts as test users where required. Publish the consent app for the intended audience before inviting everyone.
+5. Deploy the backend with the startup command below, and rebuild/deploy the frontend. **Continue with Google** appears on both login and registration pages.
+
+If your frontend uses a Content Security Policy, allow the Google Identity Services script/frame/connect endpoints described in [Google's setup guide](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid). If your host sends `Cross-Origin-Opener-Policy: same-origin`, use `same-origin-allow-popups` for the popup flow. Network/ad blockers may prevent Google from loading; the UI offers retry and password login.
+
+### Existing users and data preservation
+
+- On the first Google sign-in with a matching email (case-insensitive), an existing user must confirm their **current CRM password**. Signup did not verify email ownership, so matching emails alone never trigger an automatic merge.
+- Successful linking only sets the nullable, unique `User.googleId`. User IDs, email, name, password hash, organization, role, creator/assignee relationships, activities and notifications stay in place. Existing users can keep using their original password after linking.
+- Later Google logins identify that same account using Google's immutable subject (`sub`). A changed Google email does not create a replacement account or change the stored CRM email.
+- A brand-new Google identity with no matching CRM account creates a `MEMBER` account without an organization or local password. The user follows the existing create/join organization flow. Its profile explains that password management belongs to the Google Account.
+- Different Google subjects cannot overwrite an existing link. Ambiguous legacy emails and concurrent linking conflicts are rejected instead of merging records.
+- Google Sheets connections, permissions and organization tokens are independent and continue using the existing integration.
+
+### Deploy safely with existing accounts
+
+The migration `20261020120000_add_google_sign_in` adds nullable `googleId`, creates its unique index, and allows nullable passwords for new Google-only users. It contains no delete, truncate, ID replacement, password rewrite or user backfill.
+
+1. Take your normal production database backup before a schema deployment. Keep the current `DATABASE_URL` and `JWT_SECRET` so the same database and existing sessions are used.
+2. Set the Render start command to `npm start --workspace backend`. Its `prestart` script runs `prisma migrate deploy` before the compiled server starts. A migration failure stops the new server from starting against an outdated schema. To apply migrations separately (for example, in a Render pre-deploy command), run:
+
+   ```bash
+   npm exec --workspace backend -- prisma migrate deploy
+   ```
+
+3. Deploy the backend with the matching Google client ID, then deploy the frontend with its matching public client ID. Test an existing account's password login, first-time linking, next Google login, organization access and company history. Test a new Google account separately.
+
+Do not use `prisma migrate reset` or recreate the database. For a rollback, hide the frontend Google button first and keep the migrated schema; older password-only code cannot authenticate newly created Google-only accounts. Existing password hashes remain unchanged.
+
+### Verification and API behavior
+
+`POST /api/v1/auth/google` accepts JSON `{ "credential": "<Google ID token>", "currentPassword": "<only for first-time linking>" }`. The Google client library checks the token's signature, issuer, audience and expiry. A verified email is required. The endpoint is rate limited, rejects non-JSON form submissions, and issues the same HttpOnly session cookie as password login. Google sign-in ID tokens are not persisted in browser storage or returned in API responses.
+
+An existing unlinked account returns HTTP `409` with `code: "GOOGLE_LINK_REQUIRED"`; the UI then requests the password. A bad password leaves the account unchanged. When backend Google configuration is absent, the endpoint returns `503` and password login continues to work.
+
+The authentication regression tests run offline with fictional users and locally signed test tokens, while using the real Google token verifier. They cover invalid signatures/audiences/issuers/expiry, unverified emails, preserved account fields, password login after linking, new Google-only users, profile handling and conflicts. A real Google account and configured OAuth client are still needed to validate Google's consent screen end to end.
+
+Official references: [Google button integration](https://developers.google.com/identity/gsi/web/guides/display-button), [server token verification](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token).
 
 ## Google Sheets integration
 
@@ -507,7 +560,8 @@ The tables below describe the implemented routes. “Organization member” mean
 | Method | Path | Purpose | Access |
 | --- | --- | --- | --- |
 | POST | `/auth/register` | Register and start a session | Public, rate limited |
-| POST | `/auth/login` | Sign in | Public, rate limited |
+| POST | `/auth/login` | Sign in with email/password | Public, rate limited |
+| POST | `/auth/google` | Google sign-in/signup; first-time legacy linking requires the existing password | Public, rate limited |
 | POST | `/auth/logout` | Clear the session cookie | No authentication middleware |
 | GET | `/auth/me` | Read the current account | Authenticated |
 | PATCH | `/auth/update-me` | Update profile name | Authenticated |
@@ -680,7 +734,7 @@ For a setup that builds from the repository root:
 | Node version | `24` |
 | Runtime environment | Backend variables from the environment reference; use `NODE_ENV=production`. |
 
-Apply production database migrations as a deployment step appropriate to your Render service. From the repository root, the command is:
+The backend `prestart` script automatically runs `prisma migrate deploy` when using the start command above. It must complete before the updated server starts, even when Google sign-in is disabled. If Render uses a custom command such as `npx tsx src/index.ts`, switch to the documented `npm start --workspace backend` command or configure migrations as a separate pre-deploy step. To apply migrations separately from the repository root:
 
 ```bash
 cd apps/backend && npx prisma migrate deploy
@@ -718,6 +772,9 @@ Further configuration details: [Render deploys](https://render.com/docs/deploys)
 | Login does not persist | Inspect HTTPS, cookie attributes, credentialed requests, and the allowed frontend origins. |
 | Access is denied after login | Join or create an organization and verify the account's role for the requested action. |
 | Import is rejected | Provide company/contact names, choose a valid domain, check email formatting and duplicates, and reduce the batch size if it exceeds the body limit. |
+| Google sign-in button missing | Set `VITE_GOOGLE_SIGN_IN_CLIENT_ID` and rebuild the frontend. |
+| Google sign-in rejected or origin not allowed | Match the frontend/backend sign-in client IDs, register the exact frontend JavaScript origin, and check Google consent/test-user settings. |
+| Existing account requests a password when choosing Google | Confirm the existing CRM password once; this safely links Google without creating another account. |
 | Google OAuth redirect mismatch | Match `GOOGLE_REDIRECT_URI` exactly to the OAuth client's authorized callback URL. |
 | Local OAuth returns to the hosted site | Update the hardcoded frontend redirect described in the Google integration section. |
 | Google sync requests a reconnect | Reauthorize the administrator's Google connection and retry sync. |

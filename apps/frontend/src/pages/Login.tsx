@@ -1,4 +1,5 @@
 import { useState } from "react";
+import GoogleSignIn from "@/components/GoogleSignIn";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { User, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
@@ -13,12 +14,13 @@ export default function Login() {
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
+  const [isGoogleBusy, setIsGoogleBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (isLoggingIn) return;
+    if (isLoggingIn || isGoogleBusy) return;
 
     login(
       { email, password },
@@ -123,6 +125,8 @@ export default function Login() {
             </p>
           </div>
 
+          <GoogleSignIn disabled={isLoggingIn} onBusyChange={setIsGoogleBusy} />
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="email">Email</Label>
@@ -156,7 +160,7 @@ export default function Login() {
               </div>
             </div>
 
-            <Button type="submit" disabled={isLoggingIn} className="w-full">
+            <Button type="submit" disabled={isLoggingIn || isGoogleBusy} className="w-full">
               {isLoggingIn? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import GoogleSignIn from "@/components/GoogleSignIn";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { User, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
@@ -14,13 +15,14 @@ export default function Register() {
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
+  const [isGoogleBusy, setIsGoogleBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (isSigningUp) return;
+    if (isSigningUp || isGoogleBusy) return;
 
     if (password !== confirmPassword) {
       toast.error("Passwords do not match", {
@@ -136,6 +138,8 @@ export default function Register() {
             </p>
           </div>
 
+          <GoogleSignIn disabled={isSigningUp} onBusyChange={setIsGoogleBusy} />
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="name">Name</Label>
@@ -199,7 +203,7 @@ export default function Register() {
               </div>
             </div>
 
-            <Button type="submit" disabled={isSigningUp} className="w-full">
+            <Button type="submit" disabled={isSigningUp || isGoogleBusy} className="w-full">
               {isSigningUp ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
