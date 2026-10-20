@@ -1,0 +1,43 @@
+name: Backend checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+# Render deploys the linked branch. GitHub Actions only validates the backend.
+jobs:
+  backend:
+    name: Build and test backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install backend dependencies
+        run: npm ci --workspace backend --include-workspace-root --no-audit --no-fund
+
+      - name: Generate Prisma client and build backend
+        run: npm run build --workspace backend
+
+      - name: Run backend regression tests
+        run: npm test --workspace backend
