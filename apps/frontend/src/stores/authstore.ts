@@ -54,6 +54,7 @@ export type User = {
   id: string;
   email: string;
   name?: string;
+  hasPassword?: boolean;
 
   /**
    * Using a string-literal union gives you autocomplete + compile-time safety.

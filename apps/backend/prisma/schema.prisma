@@ -6,6 +6,8 @@
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
+  moduleFormat = "esm"
+  importFileExtension = "js"
 }
 
 datasource db {
@@ -77,7 +79,8 @@ model User {
   id    String @id @default(uuid())
   email String  @unique
   name  String?
-  password String
+  password String?
+  googleId String? @unique
   orgId String?
   role Role @default(MEMBER)
   organization Organization? @relation("OrganizationMembers", fields: [orgId], references: [id])

@@ -70,6 +70,7 @@ export const createSendToken = (
         id: user.id,
         email: user.email,
         name: user.name,
+        hasPassword: user.hasPassword ?? Boolean(user.password),
         role: user.role,
         organization: user.organization || null,
       },
@@ -117,6 +118,7 @@ export const me = async (req: any, res: Response) => {
           id: dbUser.id,
           email: dbUser.email,
           name: dbUser.name,
+          hasPassword: Boolean(dbUser.password),
           role: dbUser.role,
           organization: dbUser.organization || null,
         }
@@ -152,7 +154,9 @@ export const updateProfile = async (req: any, res: Response) => {
           id: dbUser.id,
           email: dbUser.email,
           name: dbUser.name,
+          hasPassword: Boolean(dbUser.password),
           role: dbUser.role,
+          organization: dbUser.organization || null,
         } 
       } 
     });
