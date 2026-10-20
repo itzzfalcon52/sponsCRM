@@ -29,6 +29,7 @@ import { useCompanies } from "../../hooks/useCompany";
 import { useDuplicateCheck } from "../../hooks/useDuplicateCheck";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
+import { toast } from "sonner";
 
 // ============================================================
 // LINKEDIN ICON

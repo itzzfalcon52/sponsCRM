@@ -3,6 +3,7 @@ import {
   createCompany,
   getCompanyById,
   listCompanies,
+  getCompanyCreators,
   updateCompany,
   deleteCompany,
   getMyCompanies,
@@ -121,6 +122,20 @@ export const getCompanyController = async (req: any, res: Response) => {
 /* ================================
    LIST COMPANIES
 ================================ */
+
+export const companyCreatorsController = async (req: any, res: Response) => {
+  try {
+    const { id, orgId, role } = req.user;
+    const creators = await getCompanyCreators(
+      orgId,
+      role === "ADMIN" || role === "SENIOR" ? undefined : id
+    );
+
+    res.status(200).json({ status: "success", data: creators });
+  } catch (error: any) {
+    res.status(400).json({ status: "fail", message: error.message });
+  }
+};
 
 export const listCompaniesController = async (req: any, res: Response) => {
   try {

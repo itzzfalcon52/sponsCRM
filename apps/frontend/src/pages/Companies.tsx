@@ -299,7 +299,9 @@ export default function Companies() {
           <MemberCompanyTable
             companies={companies}
             isLoading={isLoading}
-            filters={filters}
+            pagination={pagination}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
           />
         )}
 

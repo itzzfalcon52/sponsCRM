@@ -113,9 +113,6 @@ export default function AdminDashboard() {
   const closed =
     dashboardStats?.statuses?.CLOSED ?? 0;
 
-  const rejected =
-    dashboardStats?.statuses?.REJECTED ?? 0;
-
   const totalCash =
     dashboardStats?.revenue?.totalCash ?? 0;
 

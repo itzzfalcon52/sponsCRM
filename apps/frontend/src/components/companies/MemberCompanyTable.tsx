@@ -23,7 +23,9 @@ import TimelineModal from "../activity/TimelineModal";
 export default function MemberCompanyTable({
   companies = [],
   isLoading = false,
-  filters = {},
+  pagination,
+  currentPage = 1,
+  onPageChange: setCurrentPage,
 }: any) {
   // ============================================================
   // MODAL STATE
@@ -69,66 +71,10 @@ export default function MemberCompanyTable({
     safeCompanies = companies.data;
   }
 
-  // ============================================================
-  // FILTERING
-  // ============================================================
-
-  const filteredCompanies = safeCompanies.filter((c: any) => {
-    let match = true;
-
-    // Search
-    if (filters.q) {
-      const search = filters.q.toLowerCase();
-
-      const matchesSearch =
-        c.name?.toLowerCase().includes(search) ||
-        c.contactName?.toLowerCase().includes(search) ||
-        c.domain?.toLowerCase().includes(search);
-
-      match = match && matchesSearch;
-    }
-
-    // Status
-    if (filters.status) {
-      match = match && c.status === filters.status;
-    }
-
-    // Domain
-    if (filters.domain) {
-      match =
-        match &&
-        c.domain
-          ?.toLowerCase()
-          .includes(filters.domain.toLowerCase());
-    }
-
-    return match;
-  });
-
-  // ============================================================
-  // PAGINATION
-  // ============================================================
-
-  const [currentPage, setCurrentPage] = useState(1);
-
   const itemsPerPage = 10;
-
-  const totalPages = Math.ceil(
-    filteredCompanies.length / itemsPerPage
-  );
-
-  const paginatedCompanies = filteredCompanies.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  // ============================================================
-  // RESET PAGE WHEN FILTERS CHANGE
-  // ============================================================
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filters]);
+  const totalItems = pagination?.total ?? safeCompanies.length;
+  const totalPages = pagination?.totalPages ?? Math.ceil(totalItems / itemsPerPage);
+  const paginatedCompanies = safeCompanies;
 
   // ============================================================
   // CLOSE DROPDOWN WHEN CLICKING OUTSIDE
@@ -384,6 +330,10 @@ export default function MemberCompanyTable({
             <div className="h-6 w-24 rounded-md bg-muted" />
           </td>
 
+          <td className="px-6 py-4">
+            <div className="h-4 w-24 rounded bg-muted" />
+          </td>
+
           <td className="px-6 py-4 text-right">
             <div className="ml-auto h-6 w-6 rounded bg-muted" />
           </td>
@@ -528,6 +478,10 @@ export default function MemberCompanyTable({
                 Follow Up
               </th>
 
+              <th className="whitespace-nowrap px-6 py-4 text-xs font-semibold uppercase tracking-wider">
+                Added by
+              </th>
+
               <th
                 className="
                   whitespace-nowrap
@@ -555,7 +509,7 @@ export default function MemberCompanyTable({
             ) : paginatedCompanies.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="px-6 py-12 text-center"
                 >
                   <div
@@ -845,6 +799,15 @@ export default function MemberCompanyTable({
                     )}
                   </td>
 
+                  <td className="px-6 py-4">
+                    <span
+                      className="whitespace-nowrap text-sm font-medium text-foreground"
+                      title={c.createdBy?.email}
+                    >
+                      {c.createdBy?.name?.trim() || c.createdBy?.email || "Unknown"}
+                    </span>
+                  </td>
+
                   {/* ==================================================
                       ACTIONS
                   ================================================== */}
@@ -1024,7 +987,7 @@ export default function MemberCompanyTable({
         <p className="text-sm text-muted-foreground">
           Showing{" "}
           <span className="font-medium text-foreground">
-            {filteredCompanies.length === 0
+            {totalItems === 0
               ? 0
               : (currentPage - 1) *
                   itemsPerPage +
@@ -1034,12 +997,12 @@ export default function MemberCompanyTable({
           <span className="font-medium text-foreground">
             {Math.min(
               currentPage * itemsPerPage,
-              filteredCompanies.length
+              totalItems
             )}
           </span>{" "}
           of{" "}
           <span className="font-medium text-foreground">
-            {filteredCompanies.length}
+            {totalItems}
           </span>{" "}
           results
         </p>
@@ -1065,7 +1028,7 @@ export default function MemberCompanyTable({
                 isLoading
               }
               onClick={() =>
-                setCurrentPage((prev) =>
+                setCurrentPage((prev: number) =>
                   Math.max(prev - 1, 1)
                 )
               }
@@ -1127,7 +1090,7 @@ export default function MemberCompanyTable({
                 isLoading
               }
               onClick={() =>
-                setCurrentPage((prev) =>
+                setCurrentPage((prev: number) =>
                   Math.min(
                     prev + 1,
                     totalPages
