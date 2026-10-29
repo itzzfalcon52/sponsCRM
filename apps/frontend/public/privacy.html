@@ -43,7 +43,7 @@
   </header>
   <main>
     <h1>Privacy Policy</h1>
-    <p class="meta">Last updated: October 29, 2026</p>
+    <p class="meta">Last updated: October 30, 2026</p>
 
     <p>SponsCRM (&ldquo;SponsCRM&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) is a web application at <a href="https://www.sponscrm.tech">https://www.sponscrm.tech</a> that helps student and event teams track sponsorship outreach: the companies they contact, the people at those companies, and the progress of each conversation. This policy explains what information we collect, how we use it, and the choices you have. If you use SponsCRM you agree to this policy.</p>
 
@@ -71,7 +71,7 @@
     <h3>Files and sheets you import</h3>
     <ul>
       <li>When you upload an Excel or CSV file, it is read in your browser. Only the company rows you choose to import are sent to us; the file itself is not uploaded or kept.</li>
-      <li>When you import from a Google Sheets link, we read that sheet through Google&rsquo;s API (see &ldquo;Google user data&rdquo; below) and send its contents to your browser so you can review them before importing.</li>
+      <li>When you paste a Google Sheets link, our server downloads that sheet (only if it is shared as &ldquo;Anyone with the link can view&rdquo;) and passes it to your browser so you can review it before importing. We do not sign in to your Google account for this, and we do not keep the sheet; rows are stored only if you choose to import them as companies.</li>
     </ul>
 
     <h3>Technical information</h3>
@@ -81,24 +81,24 @@
     </ul>
 
     <h2>2. Google user data</h2>
-    <p>SponsCRM uses Google APIs in three ways. In every case we request only what the feature needs.</p>
+    <p>SponsCRM uses Google in two ways. In each case we request only what the feature needs.</p>
 
     <h3>Sign in with Google</h3>
     <p>Google Sign-In gives us your basic profile: your Google account ID, email address and name. We use them only to create and recognize your SponsCRM account. We do not access your Gmail, Drive, contacts or any other Google data through sign-in.</p>
 
-    <h3>Importing from a Google Sheets link (your own connection)</h3>
-    <p>If you choose &ldquo;Connect Google&rdquo; in the Import Sheet window, you grant SponsCRM <strong>read-only</strong> access to Google Sheets (the scope <code>https://www.googleapis.com/auth/spreadsheets.readonly</code>).</p>
+    <h3>Syncing your organization&rsquo;s data to a Google Sheet (Admins only)</h3>
+    <p>An organization Admin can connect a Google account to export the organization&rsquo;s company list to a Google Sheet. This asks for one permission: access to the files that SponsCRM itself creates in Google Drive (the scope <code>https://www.googleapis.com/auth/drive.file</code>).</p>
     <ul>
-      <li><strong>What we do with it:</strong> we read only the spreadsheet whose link you paste, so you can import its rows as companies. We do not browse, list or read any other file in your Google account, and we never change or delete anything in it.</li>
-      <li><strong>What we store:</strong> an encrypted refresh token, so you do not have to reconnect every time. We do not store the contents of your sheet; rows are kept only if you choose to import them as companies.</li>
-      <li><strong>Your control:</strong> you can disconnect at any time from the same window (&ldquo;Disconnect&rdquo;), which deletes the stored token. You can also remove SponsCRM&rsquo;s access in your Google Account at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
+      <li><strong>What we do with it:</strong> when the Admin chooses &ldquo;Sync&rdquo;, we create one spreadsheet in the connected account and update it with the organization&rsquo;s company list. With this permission SponsCRM cannot see, open or change any other file in the Google account.</li>
+      <li><strong>What we store:</strong> the connection&rsquo;s tokens, on our servers against that organization, so the Admin does not have to reconnect each time, and the ID of the spreadsheet we created.</li>
+      <li><strong>Your control:</strong> you can remove SponsCRM&rsquo;s access at any time at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>, or by reconnecting with a different account.</li>
     </ul>
 
-    <h3>Syncing your organization&rsquo;s data to a Google Sheet (Admins only)</h3>
-    <p>An organization Admin can connect a Google account to export the organization&rsquo;s company list to a Google Sheet. This asks for access to Google Sheets and to files the app itself creates in Google Drive (the scopes <code>https://www.googleapis.com/auth/spreadsheets</code> and <code>https://www.googleapis.com/auth/drive.file</code>). We use it only to create and update the one spreadsheet that holds the export, when the Admin chooses &ldquo;Sync&rdquo;. The connection&rsquo;s tokens are stored on our servers against that organization, and the connection can be removed by reconnecting with another account or by revoking access in the Google Account settings.</p>
+    <h3>Importing from a Google Sheets link</h3>
+    <p>This does not use Google sign-in or any Google permission. It works only for sheets their owners have shared as &ldquo;Anyone with the link can view&rdquo;, which our server downloads the same way a browser would. Private sheets are never accessed; download them from Google Sheets and upload the file instead.</p>
 
     <div class="note">
-      SponsCRM&rsquo;s use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements. We do not use Google user data for advertising, we do not sell it, we do not transfer it to others except as needed to provide the features above or to comply with the law, and no person at SponsCRM reads it except where you ask for support, it is needed for security or abuse investigation, or the law requires it.
+      SponsCRM&rsquo;s use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements. We do not use Google user data for advertising, we do not sell it, we do not transfer it to others except as needed to provide the Sync feature above or to comply with the law, and no person at SponsCRM reads it except where you ask for support, it is needed for security or abuse investigation, or the law requires it.
     </div>
 
     <h2>3. How we use information</h2>
@@ -112,7 +112,7 @@
     <ul>
       <li><strong>Members of your organization.</strong> What you add to an organization is visible to that organization&rsquo;s members according to their roles. If you belong to several organizations, each organization only sees its own data.</li>
       <li><strong>Service providers</strong> that host SponsCRM for us: our website host (Vercel), our application host (Render) and our database provider (Neon). They process data only to run the service for us.</li>
-      <li><strong>Google</strong>, when you use the Google features above, as you direct.</li>
+      <li><strong>Google</strong>, when you sign in with Google or an Admin uses Sync, as they direct.</li>
       <li><strong>Legal reasons.</strong> If the law requires it, or to protect the rights, safety and security of our users and the service.</li>
     </ul>
     <p>We do not sell your personal information.</p>
@@ -125,7 +125,7 @@
     </ul>
 
     <h2>6. Security</h2>
-    <p>We protect your information with encrypted connections (HTTPS), hashed passwords, HTTP-only session cookies, role-based access limits within each organization, and encryption of the Google refresh tokens you connect for imports. No online service can be perfectly secure, so please use a strong, unique password.</p>
+    <p>We protect your information with encrypted connections (HTTPS), hashed passwords, HTTP-only session cookies and role-based access limits within each organization. No online service can be perfectly secure, so please use a strong, unique password.</p>
 
     <h2>7. Your choices and rights</h2>
     <p>You can view and edit the information in your account, disconnect Google at any time, and ask us to correct, export or delete your information. Depending on where you live, you may have additional rights under local law; contact us and we will help.</p>
