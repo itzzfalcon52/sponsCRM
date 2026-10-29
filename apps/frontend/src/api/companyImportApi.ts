@@ -1,5 +1,4 @@
 import { api } from "./axios";
-import type { User } from "../stores/authstore";
 
 export interface BulkImportCompany {
   name: string;
@@ -30,11 +29,10 @@ export interface BulkImportResponse {
   };
 }
 
-export interface GoogleSheetPreview {
-  tabs: string[];
-  selectedTab: string;
-  rows: string[][];
-  truncated: boolean;
+/** A shared Google Sheet, downloaded by the server as an .xlsx file. */
+export interface SheetLinkFile {
+  fileName: string;
+  fileBase64: string;
 }
 
 export const companyImportApi = {
@@ -49,29 +47,10 @@ export const companyImportApi = {
     return response.data;
   },
 
-  previewGoogleSheet: async (
-    url: string,
-    sheetTitle?: string
-  ): Promise<GoogleSheetPreview> => {
-    const response = await api.post("/companies/import/google-sheet", {
-      url,
-      sheetTitle,
-    });
+  /** Downloads a sheet shared as "Anyone with the link can view" as an .xlsx file. */
+  downloadSheetLink: async (url: string): Promise<SheetLinkFile> => {
+    const response = await api.post("/companies/import/google-sheet", { url });
 
     return response.data.data;
-  },
-
-  /** Where to send the person to connect their own Google account (read-only). */
-  connectGoogleForImport: async (): Promise<string> => {
-    const response = await api.get("/google/connect-import");
-
-    return response.data.url;
-  },
-
-  /** Forgets this person's Google connection. Returns the updated session. */
-  disconnectGoogleForImport: async (): Promise<{ data: { user: User } }> => {
-    const response = await api.delete("/google/connect-import");
-
-    return response.data;
   },
 };

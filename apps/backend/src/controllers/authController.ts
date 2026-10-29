@@ -51,9 +51,6 @@ export const sanitizeUser = (user: any) => ({
   role: user.role,
   organization: user.organization || null,
   organizations: user.organizations ?? [],
-  // Whether this person connected their own Google account for sheet imports.
-  // Never the token itself.
-  googleImportConnected: Boolean(user.googleSheetsToken),
 });
 
 export const createSendToken = (

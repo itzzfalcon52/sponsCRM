@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
-import { googleSheetPreviewSchema, readGoogleSheet } from "../models/googleSheetImport.js";
-import { GoogleImportError } from "../utils/googleSheetsClient.js";
+import { googleSheetPreviewSchema, fetchPublicSheet, SheetLinkError } from "../models/googleSheetImport.js";
 import {
   createCompany,
   getCompanyById,
@@ -440,7 +439,7 @@ export const searchDuplicatesController = async (req: any, res: Response) => {
 
 
 /* ============================================================
-   PREVIEW A GOOGLE SHEET FOR IMPORT
+   DOWNLOAD A SHARED GOOGLE SHEET FOR IMPORT
    ============================================================ */
 
 export const previewGoogleSheetController = async (
@@ -449,7 +448,7 @@ export const previewGoogleSheetController = async (
 ) => {
   try {
     const input = googleSheetPreviewSchema.parse(req.body);
-    const data = await readGoogleSheet(req.user.id, req.user.orgId, input);
+    const data = await fetchPublicSheet(input.url);
 
     return res.status(200).json({ status: "success", data });
   } catch (error: any) {
@@ -461,7 +460,7 @@ export const previewGoogleSheetController = async (
       });
     }
 
-    if (error instanceof GoogleImportError) {
+    if (error instanceof SheetLinkError) {
       return res.status(error.status).json({
         status: "fail",
         error: error.code,
