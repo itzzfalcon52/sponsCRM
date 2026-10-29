@@ -72,7 +72,7 @@ export default function Footer() {
               <li><a href="#" className="hover:text-indigo-400 transition-colors">About</a></li>
               <li><a href="#" className="hover:text-indigo-400 transition-colors">Careers</a></li>
               <li><a href="#" className="hover:text-indigo-400 transition-colors">Contact</a></li>
-              <li><a href="#" className="hover:text-indigo-400 transition-colors">Privacy Policy</a></li>
+              <li><a href="/privacy" className="hover:text-indigo-400 transition-colors">Privacy Policy</a></li>
             </ul>
           </div>
         </div>
@@ -80,8 +80,8 @@ export default function Footer() {
         <div className="pt-8 border-t border-slate-800/50 flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
           <p>© {new Date().getFullYear()} SponsCRM Inc. All rights reserved.</p>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+            <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
+            <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Security</a>
           </div>
         </div>
