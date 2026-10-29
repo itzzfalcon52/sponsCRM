@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import {
   UserMinus,
   CheckCircle2,
   Loader2,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,6 +31,28 @@ export default function AssignModal({
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const isBulk = selectedIds.length > 0;
+
+  // Search box for picking a person quickly in larger teams.
+  const [query, setQuery] = useState("");
+
+  // Clear the search whenever the dialog closes.
+  const closeModal = (isOpen?: boolean) => {
+    setQuery("");
+    onClose(isOpen);
+  };
+
+  const filteredMembers = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    const members: { id: string; name?: string | null; email: string; role: string }[] =
+      orgMembers ?? [];
+    if (!needle) return members;
+
+    return members.filter((m) =>
+      [m.name, m.email, m.role].some((value) =>
+        (value ?? "").toLowerCase().includes(needle)
+      )
+    );
+  }, [orgMembers, query]);
 
   const handleAssign = (targetUserId: string | null) => {
     if (loadingId) return;
@@ -62,7 +85,7 @@ export default function AssignModal({
               } unassigned successfully!`
         );
 
-        onClose();
+        closeModal();
       },
 
       onError: () => {
@@ -82,7 +105,7 @@ export default function AssignModal({
       open={open}
       onOpenChange={(isOpen) => {
         if (!loadingId) {
-          onClose(isOpen);
+          closeModal(isOpen);
         }
       }}
     >
@@ -167,6 +190,29 @@ export default function AssignModal({
             </div>
           </div>
         </DialogHeader>
+
+        {/* =====================================================
+            SEARCH
+        ====================================================== */}
+
+        {orgMembers && orgMembers.length > 0 && (
+          <div className="border-b border-border bg-background px-4 py-3">
+            <div className="group relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search by name, email or role..."
+                aria-label="Search team members"
+                autoComplete="off"
+                disabled={!!loadingId}
+                className="w-full rounded-lg border border-input bg-background py-2.5 pl-9 pr-4 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+              />
+            </div>
+          </div>
+        )}
 
         {/* =====================================================
             TEAM MEMBERS AREA
@@ -289,8 +335,12 @@ export default function AssignModal({
               TEAM MEMBERS
           ==================================================== */}
 
-          {orgMembers && orgMembers.length > 0 ? (
-            orgMembers.map((m: any) => {
+          {orgMembers && orgMembers.length > 0 && filteredMembers.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No members match &ldquo;{query.trim()}&rdquo;
+            </p>
+          ) : orgMembers && orgMembers.length > 0 ? (
+            filteredMembers.map((m: any) => {
               const isAssigned =
                 !isBulk &&
                 company?.assignedToId === m.id;
