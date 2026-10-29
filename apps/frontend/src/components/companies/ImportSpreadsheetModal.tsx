@@ -63,6 +63,17 @@ const selectClass =
 const sectorLabel = (value: string) =>
   sectors.find((s) => s.value === value)?.label ?? value;
 
+function ErrorAlert({ message }: { message: string | null }) {
+  if (!message) return null;
+
+  return (
+    <div role="alert" className="flex gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-400">
+      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+      {message}
+    </div>
+  );
+}
+
 const requestError = (error: unknown, fallback: string) => {
   const e = error as { response?: { data?: { message?: string } }; message?: string };
   return e?.response?.data?.message || e?.message || fallback;
@@ -115,6 +126,7 @@ export default function ImportSpreadsheetModal({
   const readyRows = importRows.filter((r) => !r.error && r.duplicateOf === null);
   const invalidRows = importRows.filter((r) => r.error);
   const repeatRows = importRows.filter((r) => !r.error && r.duplicateOf !== null);
+  const warningRows = readyRows.filter((r) => r.warning);
 
   // ============================================================
   // LOADING A SOURCE
@@ -431,12 +443,7 @@ export default function ImportSpreadsheetModal({
                 </form>
               )}
 
-              {sourceError && (
-                <div role="alert" className="flex gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-400">
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                  {sourceError}
-                </div>
-              )}
+              <ErrorAlert message={sourceError} />
             </div>
           )}
 
@@ -446,6 +453,8 @@ export default function ImportSpreadsheetModal({
                 We matched your columns to SponsCRM fields. Check them, change any that are
                 wrong, and leave the rest as "Not in sheet".
               </p>
+
+              <ErrorAlert message={sourceError} />
 
               <div className="grid gap-3 sm:grid-cols-2">
                 {tabs.length > 1 && (
@@ -551,6 +560,9 @@ export default function ImportSpreadsheetModal({
                 <span className="font-medium text-emerald-600">
                   {readyRows.length} ready · all in {sectorLabel(sector)}
                 </span>
+                {warningRows.length > 0 && (
+                  <span className="text-amber-600">{warningRows.length} with an email left out</span>
+                )}
                 {repeatRows.length > 0 && (
                   <span className="text-amber-600">{repeatRows.length} repeated in sheet</span>
                 )}
@@ -559,7 +571,8 @@ export default function ImportSpreadsheetModal({
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Invalid and repeated rows are skipped. Companies already in your CRM are skipped
+                Rows with no company name, and repeated rows, are skipped. A bad email never skips a
+                company: it is imported without the email. Companies already in your CRM are skipped
                 too and listed after the import.
               </p>
 
@@ -591,6 +604,11 @@ export default function ImportSpreadsheetModal({
                               </span>
                             ) : row.duplicateOf !== null ? (
                               <span className="font-medium text-amber-600">Repeat of row {row.duplicateOf}</span>
+                            ) : row.warning ? (
+                              <span className="flex items-center gap-1 font-medium text-amber-600" title={row.warning}>
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Ready · {row.warning}
+                              </span>
                             ) : (
                               <span className="flex items-center gap-1 font-medium text-emerald-600">
                                 <CheckCircle2 className="h-3.5 w-3.5" />
@@ -654,7 +672,13 @@ export default function ImportSpreadsheetModal({
         <div className="flex flex-col-reverse gap-2 border-t border-border bg-muted/30 px-4 py-3 sm:flex-row sm:justify-end sm:px-6">
           {step === "map" && (
             <>
-              <Button variant="outline" onClick={() => setStep("source")}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSourceError(null);
+                  setStep("source");
+                }}
+              >
                 Back
               </Button>
               <Button disabled={mapping?.name === null || !sector} onClick={() => setStep("preview")}>

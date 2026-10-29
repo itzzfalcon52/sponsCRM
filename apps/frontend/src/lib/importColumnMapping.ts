@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /* ============================================================
    Maps the columns of an arbitrary spreadsheet onto CRM fields.
    Everything here is pure so it can be tested without a browser.
@@ -135,6 +137,16 @@ export const columnLabels = (rows: string[][], headerRow: number): string[] => {
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const isEmail = (value: string) => EMAIL.test(value);
 
+const EMAIL_IN_TEXT = /[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g;
+
+/**
+ * First usable email address inside a messy cell: handles several addresses
+ * ("a@x.com / b@x.com", "a@x.com; b@x.com"), "Name <a@x.com>", and trailing
+ * punctuation. Returns "" when the cell has none (for example "N/A").
+ */
+export const extractEmail = (raw: string): string =>
+  (raw.match(EMAIL_IN_TEXT) ?? []).find((candidate) => z.email().safeParse(candidate).success) ?? "";
+
 const looksLikePhone = (value: string) =>
   /^\+?[\d\s\-().]+$/.test(value) && value.replace(/\D/g, "").length >= 7;
 
@@ -211,6 +223,8 @@ export interface ImportRow {
   /** Domain enum value chosen for the whole sheet */
   domain: string;
   error: string | null;
+  /** The row is imported, but something in it was left out (e.g. an unusable email) */
+  warning: string | null;
   /** Sheet row of the first company with the same name, when this is a repeat */
   duplicateOf: number | null;
 }
@@ -236,13 +250,18 @@ export const buildImportRows = (
 
     const sheetRow = headerRow + 2 + offset;
     const name = cell(row, mapping.name).replace(/\s+/g, " ");
-    // Cells sometimes hold several addresses; keep the first.
-    const email = cell(row, mapping.email).split(/[,;\s]+/)[0] ?? "";
+    // A bad email never costs the company: use the first usable address in
+    // the cell, or import without one and say so.
+    const rawEmail = cell(row, mapping.email);
+    const email = extractEmail(rawEmail);
+    const warning =
+      rawEmail && !email
+        ? `Email ignored: "${rawEmail.length > 30 ? `${rawEmail.slice(0, 30)}...` : rawEmail}"`
+        : null;
 
     let error: string | null = null;
     if (!name) error = "Company name is missing";
     else if (name.length > 255) error = "Company name is too long";
-    else if (email && !isEmail(email)) error = "Invalid email address";
     else if (!sector) error = "Pick a sector";
 
     let duplicateOf: number | null = null;
@@ -262,6 +281,7 @@ export const buildImportRows = (
       linkedinUrl: cell(row, mapping.linkedinUrl),
       domain: sector,
       error,
+      warning: error ? null : warning,
       duplicateOf,
     });
   });
