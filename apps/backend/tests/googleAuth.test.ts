@@ -46,13 +46,20 @@ test("Google sign-in preserves accounts and validates provider credentials", asy
   const existing = {
     id: "11111111-1111-4111-8111-111111111111", email: "Existing@Example.com",
     name: "Original CRM Name", password: hash, googleId: null as string | null,
-    role: "ADMIN", orgId: "org-existing", organization: { id: "org-existing", name: "Original Organization" },
+    // Role and organization come from the membership in the organization the user has open.
+    orgId: "org-existing",
+    memberships: [{
+      orgId: "org-existing", role: "ADMIN", createdAt: new Date(0),
+      organization: { id: "org-existing", name: "Original Organization" },
+    }],
+    get role() { return this.memberships[0].role; },
+    get organization() { return this.memberships[0].organization; },
   };
   let users: any[] = [];
   let writes: any[] = [];
   let race = false;
   let createConflict = false;
-  const reset = () => { users = [{ ...existing }]; writes = []; race = false; createConflict = false; };
+  const reset = () => { users = [Object.defineProperties({}, Object.getOwnPropertyDescriptors(existing))]; writes = []; race = false; createConflict = false; };
   const withoutGoogleId = (user: any) => { const { googleId, ...rest } = user; return rest; };
   reset();
   stub(prisma.user, "findUnique", async ({ where }: any) => users.find((u) =>
@@ -67,7 +74,7 @@ test("Google sign-in preserves accounts and validates provider credentials", asy
   });
   stub(prisma.user, "create", async ({ data }: any) => {
     if (createConflict) throw new Prisma.PrismaClientKnownRequestError("Unique constraint", { code: "P2002", clientVersion: "test" });
-    const user = { id: "new-user", role: "MEMBER", orgId: null, organization: null, ...data };
+    const user = { id: "new-user", orgId: null, memberships: [], ...data };
     users.push(user); writes.push(data); return user;
   });
   stub(prisma.user, "update", async ({ where, data }: any) => {

@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 import { getOAuthClient } from "../utils/google.js";
 import type { Prisma, Domain } from "../../generated/prisma/client.js";
@@ -26,6 +27,25 @@ export const connectGoogle = (req: any, res: any) => {
       });
     }
 
+    if (!req.user.orgId || !process.env.JWT_SECRET) {
+      return res.status(400).json({
+        error: "No organization is open",
+      });
+    }
+
+    // The state carries the user AND the organization that was open when
+    // Connect was clicked, signed so it can't be forged or altered. The
+    // callback uses it instead of whichever organization is open later.
+    const state = jwt.sign(
+      {
+        purpose: "google-connect",
+        userId: req.user.id,
+        orgId: req.user.orgId,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "10m" }
+    );
+
     const url = oauth2Client.generateAuthUrl({
       access_type: "offline",
 
@@ -37,8 +57,8 @@ export const connectGoogle = (req: any, res: any) => {
         "https://www.googleapis.com/auth/drive.file",
       ],
 
-      // Used to identify the user after OAuth callback.
-      state: req.user.id,
+      // Identifies the user and organization after the OAuth callback.
+      state,
     });
 
     return res.json({
@@ -62,9 +82,42 @@ export const googleCallback = async (req: any, res: any) => {
   try {
     const { code, state } = req.query;
 
-    if (!code || !state) {
+    if (!code || !state || typeof state !== "string") {
       return res.status(400).send("Missing OAuth code or state");
     }
+
+    /* --------------------------------------------------------
+       Verify the signed state before doing anything else
+    -------------------------------------------------------- */
+
+    let connect: { purpose?: string; userId?: string; orgId?: string };
+
+    try {
+      connect = jwt.verify(state, process.env.JWT_SECRET as string) as typeof connect;
+    } catch {
+      return res.status(400).send("Invalid or expired OAuth state");
+    }
+
+    if (connect.purpose !== "google-connect" || !connect.userId || !connect.orgId) {
+      return res.status(400).send("Invalid or expired OAuth state");
+    }
+
+    /* --------------------------------------------------------
+       The user must still be an admin of that organization
+    -------------------------------------------------------- */
+
+    const membership = await prisma.membership.findUnique({
+      where: {
+        userId_orgId: { userId: connect.userId, orgId: connect.orgId },
+      },
+      select: { role: true },
+    });
+
+    if (membership?.role !== "ADMIN") {
+      return res.status(403).send("Only an organization admin can connect Google");
+    }
+
+    const orgId = connect.orgId;
 
     const oauth2Client = getOAuthClient();
 
@@ -72,25 +125,7 @@ export const googleCallback = async (req: any, res: any) => {
        Exchange authorization code for tokens
     -------------------------------------------------------- */
 
-    const { tokens } = await oauth2Client.getToken(code);
-
-    const userId = state as string;
-
-    /* --------------------------------------------------------
-       Find user
-    -------------------------------------------------------- */
-
-    const user = await prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-    });
-
-    if (!user || !user.orgId) {
-      return res.status(400).send(
-        "User or organization not found"
-      );
-    }
+    const { tokens } = await oauth2Client.getToken(code as string);
 
     /* --------------------------------------------------------
        IMPORTANT:
@@ -111,7 +146,7 @@ export const googleCallback = async (req: any, res: any) => {
 
     await prisma.organization.update({
       where: {
-        id: user.orgId,
+        id: orgId,
       },
 
       data: {
@@ -128,7 +163,7 @@ export const googleCallback = async (req: any, res: any) => {
     });
 
     console.log(
-      `Google connected successfully for organization ${user.orgId}`
+      `Google connected successfully for organization ${orgId}`
     );
 
     /* --------------------------------------------------------
@@ -151,19 +186,12 @@ export const googleCallback = async (req: any, res: any) => {
 
 export const syncSheets = async (req: any, res: any) => {
   try {
-    const userId = req.user.id;
+    // The organization open for THIS request. Reading it from the request
+    // (not the database) keeps a long sync on the org it started with, even
+    // if the user switches organizations meanwhile.
+    const user = req.user as { orgId: string | null };
 
-    /* --------------------------------------------------------
-       Find user
-    -------------------------------------------------------- */
-
-    const user = await prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-    });
-
-    if (!user || !user.orgId) {
+    if (!user.orgId) {
       return res.status(400).json({
         error: "User or organization not found",
       });
@@ -434,18 +462,7 @@ export const syncSheets = async (req: any, res: any) => {
 
     if (isGoogleAuthError(err)) {
       try {
-        const userId = req.user.id;
-
-        const user =
-          await prisma.user.findUnique({
-            where: {
-              id: userId,
-            },
-
-            select: {
-              orgId: true,
-            },
-          });
+        const user = req.user as { orgId: string | null };
 
         if (user?.orgId) {
           await prisma.organization.update({

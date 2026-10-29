@@ -89,6 +89,7 @@ model User {
   createdCompanies Company[] @relation("CreatedCompanies")
   activities Activity[]
   notifications Notification[]
+  memberships Membership[]
 
   
 } 
@@ -98,6 +99,7 @@ model Organization {
   name String
   inviteCode String @unique
   users User[] @relation("OrganizationMembers")
+  memberships Membership[]
   companies Company[]
   createdById String
   createdAt DateTime @default(now())
@@ -179,3 +181,17 @@ model Notification {
   @@index([userId])
 }
 
+// A user can belong to several organizations, with a role in each.
+// User.orgId is only the organization the user currently has open.
+model Membership {
+  id        String       @id @default(uuid())
+  userId    String
+  orgId     String
+  role      Role         @default(MEMBER)
+  createdAt DateTime     @default(now())
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, orgId])
+  @@index([orgId])
+}

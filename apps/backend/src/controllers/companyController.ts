@@ -276,11 +276,9 @@ export const assignCompanyController = async (req: any, res: Response) => {
 
     // ONLY validate the user if they are actually assigning it to someone (not unassigning)
     if (assignedToId) {
-      const user = await prisma.user.findFirst({
-        where:{
-          id: assignedToId,
-          orgId
-        }
+      const user = await prisma.membership.findUnique({
+        where: { userId_orgId: { userId: assignedToId, orgId } },
+        select: { userId: true },
       });
 
       if (!user) {
@@ -322,12 +320,9 @@ export const bulkAssignController = async (req: any, res: Response) => {
 
     // ONLY validate the assigned user if we aren't unassigning
     if (assignedToId) {
-      const user = await prisma.user.findFirst({
-        where: {
-          id: assignedToId,
-          orgId,
-        },
-        select: { id: true },
+      const user = await prisma.membership.findUnique({
+        where: { userId_orgId: { userId: assignedToId, orgId } },
+        select: { userId: true },
       });
   
       if (!user) {

@@ -2,6 +2,7 @@ import {prisma} from '../lib/prisma.js';
 import bcrypt from 'bcrypt';
 import { Prisma } from '../../generated/prisma/client.js';
 import z from 'zod';
+import { sessionInclude, withActiveOrg } from './sessionModule.js';
 
 
 export const registerSchema=z.object({
@@ -43,18 +44,11 @@ export const registerUser = async (input:RegisterInput)=> {
 
 export const loginUser = async (input:LoginInput) => {
     const{ email, password } = loginSchema.parse(input);
-    const user = await prisma.user.findUnique({
+    const found = await prisma.user.findUnique({
         where: { email },
-        select: {
-          id: true,
-          email: true,
-          role: true,
-          orgId: true,
-          password: true,
-          name: true,
-          organization: true,
-        },
-      });
+        include: sessionInclude,
+    });
+    const user = found ? withActiveOrg(found) : null;
     if (!user || !user.password) {
         throw new Error("Invalid email or password");
     }
@@ -73,8 +67,8 @@ export const updateUserDetails = async (userId:string, data:any) => {
   return await prisma.user.update({
     where: { id: userId },
     data: { name: data.name },
-    include: { organization: true },
-  });
+    include: sessionInclude,
+  }).then(withActiveOrg);
 };
 
 // 2. Change Password

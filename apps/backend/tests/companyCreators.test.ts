@@ -45,7 +45,12 @@ test("company creators and filters", async (t) => {
     creatorQuery = args;
     return [creator];
   });
-  stub(prisma.user, "findUnique", async () => ({ id: memberId, orgId: currentOrg, role }));
+  // The organization and role the request sees come from the user's memberships.
+  stub(prisma.user, "findUnique", async () => ({
+    id: memberId,
+    orgId: currentOrg,
+    memberships: currentOrg ? [{ orgId: currentOrg, role }] : [],
+  }));
   stub(prisma.organization, "findUnique", async () => ({ id: orgId }));
   stub(prisma.company, "create", async (args: any) => {
     createQuery = args;

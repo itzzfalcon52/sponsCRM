@@ -10,6 +10,10 @@ export const createOrganizationSchema = z.object({
     
 });
 
+export const switchOrganizationSchema = z.object({
+    orgId: z.string().min(1).max(64),
+});
+
 export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>;
 
 
@@ -45,16 +49,18 @@ export const createOrganization = async (
           createdById: userId,
         },
       });
-  
-      // 2. Update user → make admin
+
+      // 2. The creator is its admin
+      await tx.membership.create({
+        data: { userId, orgId: org.id, role: "ADMIN" },
+      });
+
+      // 3. Open the new organization
       const user = await tx.user.update({
         where: { id: userId },
-        data: {
-          orgId: org.id,
-          role: "ADMIN",
-        },
+        data: { orgId: org.id },
       });
-  
+
       return { org, user };
     });
   };
@@ -69,69 +75,111 @@ export const joinOrganization = async (userId: string, inviteCode: string) => {
             throw new Error("Invalid invite code");
         }
 
-        // 2. Update user → join org as MEMBER
+        // 2. Join as MEMBER. Joining an org you already belong to keeps your role.
+        await tx.membership.upsert({
+            where: { userId_orgId: { userId, orgId: org.id } },
+            create: { userId, orgId: org.id, role: "MEMBER" },
+            update: {},
+        });
+
+        // 3. Open it
         const user = await tx.user.update({
             where: { id: userId },
-            data: {
-                orgId: org.id,
-                role: "MEMBER",
-            },
+            data: { orgId: org.id },
         });
 
         return { org, user };
     })
 };
 
-export const getOrganizationMembers = async (orgId: string) => {
-  return await prisma.user.findMany({
-    where: { orgId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true,
-    },
-    orderBy: {
-      role: 'asc', //Put ADMINs first
-    }
+export class NotAMemberError extends Error {
+  constructor() {
+    super("You are not a member of that organization.");
+  }
+}
+
+/** Opens another organization the user already belongs to. */
+export const switchOrganization = async (userId: string, orgId: string) => {
+  const membership = await prisma.membership.findUnique({
+    where: { userId_orgId: { userId, orgId } },
+    select: { orgId: true },
+  });
+
+  if (!membership) throw new NotAMemberError();
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: { orgId },
   });
 };
 
-export const removeOrganizationMember = async (memberId: string, orgId: string) => {
-  // Verify member belongs to this organization
-  const member = await prisma.user.findFirst({
-    where: { id: memberId, orgId },
+export const getOrganizationMembers = async (orgId: string) => {
+  const memberships = await prisma.membership.findMany({
+    where: { orgId },
+    select: {
+      role: true,
+      createdAt: true,
+      user: { select: { id: true, name: true, email: true } },
+    },
+    orderBy: {
+      role: 'asc', //Put ADMINs first
+    },
   });
 
-  if (!member || member.orgId !== orgId) {
-    throw new Error("Member not found in this organization");
-  }
+  // Same shape as before: one flat object per person, with their role here.
+  return memberships.map((m) => ({
+    id: m.user.id,
+    name: m.user.name,
+    email: m.user.email,
+    role: m.role,
+    createdAt: m.createdAt,
+  }));
+};
 
-  // Remove the user from the organization
-  return await prisma.user.update({
-    where: { id: memberId },
-    data: {
-      orgId: null,
-      role: "MEMBER", // Reset role to MEMBER or whatever your default is
-    },
+export const removeOrganizationMember = async (memberId: string, orgId: string) => {
+  return await prisma.$transaction(async (tx) => {
+    const membership = await tx.membership.findUnique({
+      where: { userId_orgId: { userId: memberId, orgId } },
+    });
+
+    if (!membership) {
+      throw new Error("Member not found in this organization");
+    }
+
+    await tx.membership.delete({ where: { id: membership.id } });
+
+    // If this was the org they had open, they fall back to another one they
+    // belong to (or none).
+    await tx.user.updateMany({
+      where: { id: memberId, orgId },
+      data: { orgId: null },
+    });
   });
 };
 
 export const updateMemberRole = async (memberId: string, orgId: string, newRole: Role) => {
-  const member = await prisma.user.findFirst({
-    where: { id: memberId, orgId },
-  });
+  return await prisma.$transaction(async (tx) => {
+    const membership = await tx.membership.findUnique({
+      where: { userId_orgId: { userId: memberId, orgId } },
+    });
 
-  if (!member) {
-    throw new Error("Member not found in this organization");
-  }
+    if (!membership) {
+      throw new Error("Member not found in this organization");
+    }
 
-  return await prisma.user.update({
-    where: { id: memberId },
-    data: {
-      role: newRole,
-    },
+    if (membership.role === "ADMIN" && newRole !== "ADMIN") {
+      const otherAdmins = await tx.membership.count({
+        where: { orgId, role: "ADMIN", NOT: { userId: memberId } },
+      });
+      if (otherAdmins === 0) {
+        throw new Error("An organization must keep at least one Admin.");
+      }
+    }
+
+    return tx.membership.update({
+      where: { id: membership.id },
+      data: { role: newRole },
+    });
   });
 };
 
@@ -143,25 +191,33 @@ export const updateOrganizationName = async (orgId: string, name: string) => {
 };
 
 export const leaveOrganization = async (userId: string, orgId: string) => {
-  // Check if user is the last admin
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  
-  if (user?.role === "ADMIN") {
-    const otherAdmins = await prisma.user.count({
-      where: { orgId, role: "ADMIN", NOT: { id: userId } },
+  return await prisma.$transaction(async (tx) => {
+    const membership = await tx.membership.findUnique({
+      where: { userId_orgId: { userId, orgId } },
     });
 
-    if (otherAdmins === 0) {
-      throw new Error("You are the last Admin. Appoint another Admin before leaving.");
+    if (!membership) {
+      throw new Error("You are not a member of this organization.");
     }
-  }
 
-  return await prisma.user.update({
-    where: { id: userId },
-    data: { 
-      orgId: null, 
-      role: "MEMBER" 
-    },
+    // The last admin can't leave
+    if (membership.role === "ADMIN") {
+      const otherAdmins = await tx.membership.count({
+        where: { orgId, role: "ADMIN", NOT: { userId } },
+      });
+
+      if (otherAdmins === 0) {
+        throw new Error("You are the last Admin. Appoint another Admin before leaving.");
+      }
+    }
+
+    await tx.membership.delete({ where: { id: membership.id } });
+
+    // Fall back to another organization they belong to (or none)
+    await tx.user.updateMany({
+      where: { id: userId, orgId },
+      data: { orgId: null },
+    });
   });
 };
 
@@ -184,16 +240,18 @@ export const deleteFullOrganization = async (orgId: string) => {
       where: { orgId }
     });
 
-    // 3. Update all Users who belong to this org
-    await tx.user.updateMany({
-      where: { orgId },
-      data: { 
-        orgId: null, 
-        role: "MEMBER" 
-      }
+    // 3. Notifications keep an org id but have no foreign key
+    await tx.notification.deleteMany({
+      where: { orgId }
     });
 
-    // 4. Finally, delete the Organization itself
+    // 4. Anyone who had this org open falls back to another membership (or none)
+    await tx.user.updateMany({
+      where: { orgId },
+      data: { orgId: null }
+    });
+
+    // 5. Finally, delete the Organization itself. Its memberships cascade.
     return await tx.organization.delete({
       where: { id: orgId }
     });

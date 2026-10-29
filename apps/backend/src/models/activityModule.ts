@@ -121,14 +121,14 @@ export const createActivity = async (
      */
     if (["POSITIVE", "CLOSED"].includes(updatedCompany.status as string)) {
       // Find the Admin of the Org
-      const admin = await tx.user.findFirst({
+      const admin = await tx.membership.findFirst({
         where: { orgId, role: "ADMIN" },
-        select: { id: true }
+        select: { userId: true }
       });
 
       if (admin) {
         await createNotification(
-          admin.id,
+          admin.userId,
           orgId,
           "Milestone Reached! 🚀",
           `${currentUser?.name || "A member"} moved ${updatedCompany.name} to ${updatedCompany.status}.`,

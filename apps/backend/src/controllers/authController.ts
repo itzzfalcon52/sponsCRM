@@ -11,6 +11,7 @@ import type { Response } from "express";
 import type { CookieOptions } from "express";
 import { Role } from "../../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
+import { loadSessionUser } from "../models/sessionModule.js";
 
 type JwtPayload = {
     id: string;
@@ -39,6 +40,19 @@ export const signToken = (user: JwtPayload) => {
   );
 };
 
+// The user fields that are safe to send to the browser. `role` and
+// `organization` describe the active organization; `organizations` lists
+// every organization the user belongs to, for the switcher.
+export const sanitizeUser = (user: any) => ({
+  id: user.id,
+  email: user.email,
+  name: user.name,
+  hasPassword: user.hasPassword ?? Boolean(user.password),
+  role: user.role,
+  organization: user.organization || null,
+  organizations: user.organizations ?? [],
+});
+
 export const createSendToken = (
   user: any,
   statusCode: number,
@@ -66,14 +80,7 @@ export const createSendToken = (
   res.status(statusCode).json({
     status: "success",
     data: {
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        hasPassword: user.hasPassword ?? Boolean(user.password),
-        role: user.role,
-        organization: user.organization || null,
-      },
+      user: sanitizeUser(user),
       ...extraData,
     },
   });
@@ -104,25 +111,13 @@ export const login = async (req: any, res: Response) => {
 
 export const me = async (req: any, res: Response) => {
   try {
-    const dbUser = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      include: { organization: true },
-    });
+    const dbUser = await loadSessionUser(req.user.id);
 
     if (!dbUser) return res.status(401).json({ status: "fail", message: "User not found" });
 
     res.status(200).json({
       status: "success",
-      data: {
-        user: {
-          id: dbUser.id,
-          email: dbUser.email,
-          name: dbUser.name,
-          hasPassword: Boolean(dbUser.password),
-          role: dbUser.role,
-          organization: dbUser.organization || null,
-        }
-      },
+      data: { user: sanitizeUser(dbUser) },
     });
   } catch (error: any) {
     res.status(500).json({ status: "error", message: error.message });
@@ -147,18 +142,9 @@ export const updateProfile = async (req: any, res: Response) => {
     const dbUser = await updateUserDetails(req.user.id, req.body);
     
     // Explicitly send back sanitized user to update Zustand store
-    res.status(200).json({ 
-      status: "success", 
-      data: { 
-        user: {
-          id: dbUser.id,
-          email: dbUser.email,
-          name: dbUser.name,
-          hasPassword: Boolean(dbUser.password),
-          role: dbUser.role,
-          organization: dbUser.organization || null,
-        } 
-      } 
+    res.status(200).json({
+      status: "success",
+      data: { user: sanitizeUser(dbUser) },
     });
   } catch (error: any) {
     res.status(400).json({ status: "error", message: error.message });

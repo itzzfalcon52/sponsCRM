@@ -4,7 +4,7 @@ import { prisma } from "../lib/prisma.js";
 export const getNotifications = async (req:any, res:any) => {
     try {
         const userId = req.user.id;
-        const notifications = await getMyNotifications(userId);
+        const notifications = await getMyNotifications(userId, req.user.orgId);
 
         res.status(200).json({
             status: "success",
@@ -38,7 +38,7 @@ export const markAsRead = async (req:any, res:any) => {
 export const markAllAsRead = async (req:any, res:any) => {
     try {
         await prisma.notification.updateMany({
-            where: { userId: req.user.id, isRead: false },
+            where: { userId: req.user.id, orgId: req.user.orgId ?? "", isRead: false },
             data: { isRead: true },
         });
 

@@ -4,6 +4,7 @@ import type { Response } from "express";
 import type { User } from "../generated/prisma/client.js";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
+import { resolveActiveMembership } from "./models/sessionModule.js";
 
 
 export const protect = async (req: any, res: Response, next: any) => {
@@ -44,19 +45,34 @@ export const protect = async (req: any, res: Response, next: any) => {
 
       
   
-      // 2. Verify user still exists 
-      const currentUser = await prisma.user.findUnique({
+      // 2. Verify user still exists, and load the organization they have open.
+      // Role and org come from the database on every request, so removing a
+      // member or switching org takes effect immediately.
+      const row = await prisma.user.findUnique({
         where: { id: decoded.userId },
         select: {
           id: true,
-          role: true,
           orgId: true,
+          memberships: {
+            select: { orgId: true, role: true },
+            orderBy: { createdAt: "asc" },
+          },
         },
       });
 
-      
+      const active = row
+        ? resolveActiveMembership(row.orgId, row.memberships)
+        : null;
 
-      /*
+      const currentUser = row
+        ? {
+            id: row.id,
+            orgId: active?.orgId ?? null,
+            role: active?.role ?? ("MEMBER" as const),
+          }
+        : null;
+
+            /*
       User logs in
         ↓
       JWT issued

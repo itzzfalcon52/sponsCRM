@@ -4,21 +4,19 @@ import type { Response } from "express";
 import { createSendToken } from "./authController.js";
 import { createOrganization, joinOrganization,getOrganizationMembers,removeOrganizationMember,updateMemberRole,updateOrganizationName, 
     leaveOrganization, 
-    deleteFullOrganization} from "../models/organisationModule.js";
-import { sign } from "crypto";
-import { create } from "domain";
+    deleteFullOrganization,
+    switchOrganization,
+    NotAMemberError} from "../models/organisationModule.js";
+import { loadSessionUser } from "../models/sessionModule.js";
 
 
 export const createOrg=async (req: any, res: Response) => {
     try{
         const userId = req.user.id; //Auth Middleware sets req.user
-        if (req.user.orgId) {
-            return res.status(400).json({
-              status: "User already in an organization",
-            });
-          }
-        const { org, user } = await createOrganization(userId, req.body);
-        createSendToken({ id: user.id, role: user.role, orgId: user.orgId }, 201, res,{
+        // A user can belong to several organizations, so having one is fine.
+        const { org } = await createOrganization(userId, req.body);
+        const user = await loadSessionUser(userId);
+        createSendToken(user, 201, res,{
 
             org:{
                 id: org.id,
@@ -37,19 +35,28 @@ export const createOrg=async (req: any, res: Response) => {
 export const joinOrg=async (req: any, res: Response) => {
     const userId = req.user.id;
     const { inviteCode } = req.body as { inviteCode: string };
-    if (req.user.orgId) {
-        return res.status(400).json({
-          status: "User already in an organization",
-        });
-      }
     try{
-        const { org, user } = await joinOrganization(userId, inviteCode);
-        createSendToken({ id: user.id, role: user.role, orgId: user.orgId }, 200, res,{ org });
+        const { org } = await joinOrganization(userId, inviteCode);
+        const user = await loadSessionUser(userId);
+        createSendToken(user, 200, res,{ org });
        
     }catch(error: any){
         res.status(400).json({ status: "Something went wrong.Please try again", message: error.message });
     }
 
+};
+
+export const switchOrg = async (req: any, res: Response) => {
+    try {
+        await switchOrganization(req.user.id, req.body.orgId);
+        const user = await loadSessionUser(req.user.id);
+        createSendToken(user, 200, res);
+    } catch (error: any) {
+        if (error instanceof NotAMemberError) {
+            return res.status(403).json({ status: "fail", message: error.message });
+        }
+        res.status(400).json({ status: "error", message: error.message });
+    }
 };
 
 export const getOrgMembers = async (req: any, res: Response) => {
@@ -177,7 +184,9 @@ export const updateOrgController = async (req: any, res: Response) => {
   export const leaveOrgController = async (req: any, res: Response) => {
     try {
       await leaveOrganization(req.user.id, req.user.orgId);
-      res.status(200).json({ status: "success", message: "Left organization successfully" });
+      // Reissue the session: the user may now be in another organization.
+      const user = await loadSessionUser(req.user.id);
+      createSendToken(user, 200, res);
     } catch (error: any) {
       res.status(400).json({ status: "error", message: error.message });
     }
@@ -190,9 +199,9 @@ export const updateOrgController = async (req: any, res: Response) => {
       }
   
       await deleteFullOrganization(req.user.orgId);
-      res.status(204).json({ status: "success", data: null });
+      const user = await loadSessionUser(req.user.id);
+      createSendToken(user, 200, res);
     } catch (error: any) {
       res.status(400).json({ status: "error", message: error.message });
     }
   };
-

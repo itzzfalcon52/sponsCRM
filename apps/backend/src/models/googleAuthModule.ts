@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import z from "zod";
 import { prisma } from "../lib/prisma.js";
 import { GoogleSignInError } from "../utils/googleSignIn.js";
+import { sessionInclude, withActiveOrg } from "./sessionModule.js";
 
 export const googleLoginSchema = z.object({
   credential: z.string().min(1).max(8192),
@@ -13,13 +14,13 @@ type GoogleIdentity = { googleId: string; email: string; name?: string };
 export async function findOrCreateGoogleUser(identity: GoogleIdentity, currentPassword?: string) {
   // Google's immutable subject, rather than a mutable email, identifies linked accounts.
   const linked = await prisma.user.findUnique({
-    where: { googleId: identity.googleId }, include: { organization: true },
+    where: { googleId: identity.googleId }, include: sessionInclude,
   });
-  if (linked) return linked;
+  if (linked) return withActiveOrg(linked);
 
   const matches = await prisma.user.findMany({
     where: { email: { equals: identity.email, mode: "insensitive" } },
-    include: { organization: true }, take: 2,
+    include: sessionInclude, take: 2,
   });
   if (matches.length > 1) {
     throw new GoogleSignInError("More than one account matches this email. Please use your existing password login.", 409);
@@ -48,18 +49,19 @@ export async function findOrCreateGoogleUser(identity: GoogleIdentity, currentPa
     if (result.count !== 1) {
       throw new GoogleSignInError("Your account changed while linking. Please start Google sign-in again.", 409);
     }
-    const user = await prisma.user.findUnique({ where: { id: existing.id }, include: { organization: true } });
+    const user = await prisma.user.findUnique({ where: { id: existing.id }, include: sessionInclude });
     if (!user) throw new GoogleSignInError("Account no longer exists.");
-    return user;
+    return withActiveOrg(user);
   }
 
   // Only brand-new users get a new ID. Existing account data is never recreated.
-  return prisma.user.create({
+  const created = await prisma.user.create({
     data: {
       email: identity.email, googleId: identity.googleId,
       name: identity.name?.trim().slice(0, 50) || identity.email.split("@")[0],
       password: null,
     },
-    include: { organization: true },
+    include: sessionInclude,
   });
+  return withActiveOrg(created);
 }
