@@ -71,9 +71,6 @@ export const bulkImportCompanySchema = z.object({
           .email("Invalid email address")
           .optional()
           .or(z.literal("")),
-
-        // Per-row sector (e.g. from a "Sector" column); falls back to the batch domain.
-        domain: DomainSchema.optional(),
       })
     )
     .min(1, "At least one company is required")
@@ -149,7 +146,7 @@ export const bulkImportCompanies = async (
           linkedinUrl: company.linkedinUrl?.trim() || null,
           phoneNumber: company.phoneNumber?.trim() || null,
           email: company.email?.trim() || null,
-          domain: company.domain ?? data.domain,
+          domain: data.domain,
           status: "NOT_CONTACTED" as const,
           createdById: userId,
           orgId,

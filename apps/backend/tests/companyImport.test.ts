@@ -53,7 +53,7 @@ test("bulk import skips duplicates and tolerates blank POC", async (t) => {
       { name: "Acme", contactName: "" },
       { name: "  acme  ", contactName: "Someone" },
       { name: "Already Here", contactName: "X" },
-      { name: "Globex", contactName: "Jo", domain: "FINTECH" },
+      { name: "Globex", contactName: "Jo" },
     ],
   });
 
@@ -68,7 +68,7 @@ test("bulk import skips duplicates and tolerates blank POC", async (t) => {
     createManyQuery.data.map((c: any) => [c.name, c.contactName, c.domain]),
     [
       ["Acme", "", "EDTECH"],
-      ["Globex", "Jo", "FINTECH"],
+      ["Globex", "Jo", "EDTECH"],
     ]
   );
 });

@@ -95,7 +95,7 @@ export default function ImportSpreadsheetModal({
 
   const [headerRow, setHeaderRow] = useState(0);
   const [mapping, setMapping] = useState<ColumnMapping | null>(null);
-  const [fallbackSector, setFallbackSector] = useState("");
+  const [sector, setSector] = useState("");
 
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState("");
@@ -108,8 +108,8 @@ export default function ImportSpreadsheetModal({
   const labels = useMemo(() => columnLabels(rows, headerRow), [rows, headerRow]);
 
   const importRows = useMemo(
-    () => (mapping ? buildImportRows(rows, headerRow, mapping, fallbackSector) : []),
-    [rows, headerRow, mapping, fallbackSector]
+    () => (mapping ? buildImportRows(rows, headerRow, mapping, sector) : []),
+    [rows, headerRow, mapping, sector]
   );
 
   const readyRows = importRows.filter((r) => !r.error && r.duplicateOf === null);
@@ -218,14 +218,13 @@ export default function ImportSpreadsheetModal({
         );
 
         const response = await companyImportApi.bulkImport({
-          domain: chunk[0].domain,
+          domain: sector,
           companies: chunk.map((r) => ({
             name: r.name,
             contactName: r.contactName,
             email: r.email || undefined,
             phoneNumber: r.phoneNumber || undefined,
             linkedinUrl: r.linkedinUrl || undefined,
-            domain: r.domain,
           })),
         });
 
@@ -266,7 +265,7 @@ export default function ImportSpreadsheetModal({
     setTruncated(false);
     setHeaderRow(0);
     setMapping(null);
-    setFallbackSector("");
+    setSector("");
     setResult(null);
     setSheetUrl("");
   };
@@ -522,19 +521,19 @@ export default function ImportSpreadsheetModal({
               </div>
 
               <div>
-                <label htmlFor="fallback-sector" className="mb-2 block text-sm font-medium text-foreground">
-                  {mapping.domain === null ? "Sector for all companies" : "Sector when a row has none"}
+                <label htmlFor="import-sector" className="mb-2 block text-sm font-medium text-foreground">
+                  Sector for all companies <span className="text-rose-600">*</span>
                 </label>
                 <select
-                  id="fallback-sector"
-                  value={fallbackSector}
-                  onChange={(event) => setFallbackSector(event.target.value)}
+                  id="import-sector"
+                  value={sector}
+                  onChange={(event) => setSector(event.target.value)}
                   className={selectClass}
                 >
                   <option value="">Select a sector...</option>
-                  {sectors.map((sector) => (
-                    <option key={sector.value} value={sector.value}>
-                      {sector.label}
+                  {sectors.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </select>
@@ -549,7 +548,9 @@ export default function ImportSpreadsheetModal({
           {step === "preview" && (
             <div className="space-y-4">
               <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
-                <span className="font-medium text-emerald-600">{readyRows.length} ready</span>
+                <span className="font-medium text-emerald-600">
+                  {readyRows.length} ready · all in {sectorLabel(sector)}
+                </span>
                 {repeatRows.length > 0 && (
                   <span className="text-amber-600">{repeatRows.length} repeated in sheet</span>
                 )}
@@ -567,7 +568,7 @@ export default function ImportSpreadsheetModal({
                   <table className="w-full border-collapse text-left text-xs">
                     <thead className="sticky top-0 z-10 bg-muted">
                       <tr>
-                        {["Row", "Company", "POC", "Email", "Phone", "Sector", "Status"].map((h) => (
+                        {["Row", "Company", "POC", "Email", "Phone", "Status"].map((h) => (
                           <th key={h} className="whitespace-nowrap border-b border-border px-3 py-2 font-semibold text-muted-foreground">
                             {h}
                           </th>
@@ -582,7 +583,6 @@ export default function ImportSpreadsheetModal({
                           <td className="max-w-[120px] truncate px-3 py-2 text-muted-foreground">{row.contactName || "—"}</td>
                           <td className="max-w-[160px] truncate px-3 py-2 text-muted-foreground">{row.email || "—"}</td>
                           <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{row.phoneNumber || "—"}</td>
-                          <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{row.domain ? sectorLabel(row.domain) : "—"}</td>
                           <td className="whitespace-nowrap px-3 py-2">
                             {row.error ? (
                               <span className="flex items-center gap-1 font-medium text-rose-600">
@@ -657,7 +657,7 @@ export default function ImportSpreadsheetModal({
               <Button variant="outline" onClick={() => setStep("source")}>
                 Back
               </Button>
-              <Button disabled={mapping?.name === null} onClick={() => setStep("preview")}>
+              <Button disabled={mapping?.name === null || !sector} onClick={() => setStep("preview")}>
                 Preview import
               </Button>
             </>

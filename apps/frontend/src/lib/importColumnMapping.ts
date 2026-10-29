@@ -1,5 +1,3 @@
-import { sectors } from "./sectors";
-
 /* ============================================================
    Maps the columns of an arbitrary spreadsheet onto CRM fields.
    Everything here is pure so it can be tested without a browser.
@@ -10,8 +8,7 @@ export type ImportField =
   | "contactName"
   | "email"
   | "phoneNumber"
-  | "linkedinUrl"
-  | "domain";
+  | "linkedinUrl";
 
 export const IMPORT_FIELDS: { key: ImportField; label: string; required?: boolean }[] = [
   { key: "name", label: "Company name", required: true },
@@ -19,7 +16,6 @@ export const IMPORT_FIELDS: { key: ImportField; label: string; required?: boolea
   { key: "email", label: "Email" },
   { key: "phoneNumber", label: "Phone" },
   { key: "linkedinUrl", label: "LinkedIn" },
-  { key: "domain", label: "Sector" },
 ];
 
 /** Column index per field, or null when the field is not in the sheet. */
@@ -31,7 +27,6 @@ export const emptyMapping = (): ColumnMapping => ({
   email: null,
   phoneNumber: null,
   linkedinUrl: null,
-  domain: null,
 });
 
 export const normalizeHeader = (value: string) =>
@@ -42,7 +37,6 @@ const FIELD_ORDER: ImportField[] = [
   "email",
   "phoneNumber",
   "linkedinUrl",
-  "domain",
   "name",
   "contactName",
 ];
@@ -65,7 +59,6 @@ const EXACT: Record<ImportField, string[]> = {
     "pocphone", "pocnumber", "pocmobile",
   ],
   linkedinUrl: ["linkedin", "linkedinurl", "linkedinprofile", "linkedinlink", "linkedinid", "profile", "profilelink"],
-  domain: ["sector", "domain", "category", "industry", "vertical", "segment"],
 };
 
 // Substring matches, for headers like "Company Name (as per website)".
@@ -75,7 +68,6 @@ const PARTIAL: Record<ImportField, string[]> = {
   email: ["email", "mail"],
   phoneNumber: ["phone", "mobile", "whatsapp", "contactno", "contactnumber"],
   linkedinUrl: ["linkedin"],
-  domain: ["sector", "domain", "industry", "category"],
 };
 
 const fieldForHeader = (normalized: string): ImportField | null => {
@@ -205,56 +197,6 @@ export const guessMapping = (rows: string[][], headerRow: number): ColumnMapping
 };
 
 /* ============================================================
-   SECTOR MATCHING
-   ============================================================ */
-
-const SECTOR_SYNONYMS: Record<string, string> = {
-  ai: "AI_TECH",
-  tech: "AI_TECH",
-  technology: "AI_TECH",
-  it: "AI_TECH",
-  finance: "FINTECH",
-  fintech: "FINTECH",
-  education: "EDTECH",
-  banking: "BANK",
-  banks: "BANK",
-  automobile: "AUTOMOBILE_TRAVEL",
-  automotive: "AUTOMOBILE_TRAVEL",
-  travel: "AUTOMOBILE_TRAVEL",
-  health: "HEALTHCARE",
-  audio: "AUDIO_MOBILE",
-  mobile: "AUDIO_MOBILE",
-  competition: "HACKATHON",
-  previous: "PREVIOUS_YEAR",
-  previoussponsors: "PREVIOUS_YEAR",
-  misc: "MISCELLANEOUS",
-  other: "MISCELLANEOUS",
-  others: "MISCELLANEOUS",
-};
-
-/** Maps free text like "Ed-Tech" or "banking" to a Domain value, or null. */
-export const mapSector = (raw: string): string | null => {
-  const value = normalizeHeader(raw);
-  if (!value) return null;
-
-  const exact = sectors.find(
-    (s) => normalizeHeader(s.value) === value || normalizeHeader(s.label) === value
-  );
-  if (exact) return exact.value;
-
-  if (SECTOR_SYNONYMS[value]) return SECTOR_SYNONYMS[value];
-
-  if (value.length >= 4) {
-    const prefix = sectors.find(
-      (s) => normalizeHeader(s.label).startsWith(value) || normalizeHeader(s.value).startsWith(value)
-    );
-    if (prefix) return prefix.value;
-  }
-
-  return null;
-};
-
-/* ============================================================
    ROWS
    ============================================================ */
 
@@ -266,7 +208,7 @@ export interface ImportRow {
   email: string;
   phoneNumber: string;
   linkedinUrl: string;
-  /** Domain enum value, "" when neither the sheet nor the fallback gives one */
+  /** Domain enum value chosen for the whole sheet */
   domain: string;
   error: string | null;
   /** Sheet row of the first company with the same name, when this is a repeat */
@@ -280,7 +222,7 @@ export const buildImportRows = (
   rows: string[][],
   headerRow: number,
   mapping: ColumnMapping,
-  fallbackSector: string
+  sector: string
 ): ImportRow[] => {
   const cell = (row: string[], col: number | null) =>
     col === null ? "" : (row[col] ?? "").trim();
@@ -296,14 +238,12 @@ export const buildImportRows = (
     const name = cell(row, mapping.name).replace(/\s+/g, " ");
     // Cells sometimes hold several addresses; keep the first.
     const email = cell(row, mapping.email).split(/[,;\s]+/)[0] ?? "";
-    const sectorText = cell(row, mapping.domain);
-    const domain = (sectorText && mapSector(sectorText)) || fallbackSector;
 
     let error: string | null = null;
     if (!name) error = "Company name is missing";
     else if (name.length > 255) error = "Company name is too long";
     else if (email && !isEmail(email)) error = "Invalid email address";
-    else if (!domain) error = "No sector: pick a fallback sector";
+    else if (!sector) error = "Pick a sector";
 
     let duplicateOf: number | null = null;
     if (!error) {
@@ -320,7 +260,7 @@ export const buildImportRows = (
       email,
       phoneNumber: cell(row, mapping.phoneNumber),
       linkedinUrl: cell(row, mapping.linkedinUrl),
-      domain,
+      domain: sector,
       error,
       duplicateOf,
     });

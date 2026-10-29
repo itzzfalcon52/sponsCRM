@@ -6,8 +6,6 @@ export interface BulkImportCompany {
   linkedinUrl?: string;
   phoneNumber?: string;
   email?: string;
-  /** Overrides the batch domain for this row */
-  domain?: string;
 }
 
 export interface BulkImportPayload {
