@@ -39,8 +39,10 @@ export const connectGoogle = (req: any, res: any) => {
     const state = jwt.sign(
       {
         purpose: "google-connect",
-        userId: req.user.id,
-        orgId: req.user.orgId,
+        // Not `userId`: that is the claim session tokens use, and this token
+        // travels in URLs, so it must never be usable as a login.
+        uid: req.user.id,
+        oid: req.user.orgId,
       },
       process.env.JWT_SECRET,
       { expiresIn: "10m" }
@@ -90,7 +92,7 @@ export const googleCallback = async (req: any, res: any) => {
        Verify the signed state before doing anything else
     -------------------------------------------------------- */
 
-    let connect: { purpose?: string; userId?: string; orgId?: string };
+    let connect: { purpose?: string; uid?: string; oid?: string };
 
     try {
       connect = jwt.verify(state, process.env.JWT_SECRET as string) as typeof connect;
@@ -98,7 +100,7 @@ export const googleCallback = async (req: any, res: any) => {
       return res.status(400).send("Invalid or expired OAuth state");
     }
 
-    if (connect.purpose !== "google-connect" || !connect.userId || !connect.orgId) {
+    if (connect.purpose !== "google-connect" || !connect.uid || !connect.oid) {
       return res.status(400).send("Invalid or expired OAuth state");
     }
 
@@ -108,7 +110,7 @@ export const googleCallback = async (req: any, res: any) => {
 
     const membership = await prisma.membership.findUnique({
       where: {
-        userId_orgId: { userId: connect.userId, orgId: connect.orgId },
+        userId_orgId: { userId: connect.uid, orgId: connect.oid },
       },
       select: { role: true },
     });
@@ -117,7 +119,7 @@ export const googleCallback = async (req: any, res: any) => {
       return res.status(403).send("Only an organization admin can connect Google");
     }
 
-    const orgId = connect.orgId;
+    const orgId = connect.oid;
 
     const oauth2Client = getOAuthClient();
 

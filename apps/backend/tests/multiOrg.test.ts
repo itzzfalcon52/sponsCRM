@@ -207,6 +207,8 @@ test("switch endpoint and the Google connect state", async (t) => {
     const body = await response.json();
     assert.equal(response.status, 200);
     assert.equal(updated.orgId, orgB);
+    // the legacy column follows the open org's role, so a rollback keeps roles
+    assert.equal(updated.role, "MEMBER");
     assert.equal(body.data.user.role, "MEMBER");
     assert.equal(body.data.user.organization.id, orgB);
     assert.deepEqual(body.data.user.organizations.map((o: any) => o.id), [orgA, orgB]);
@@ -247,17 +249,19 @@ test("switch endpoint and the Google connect state", async (t) => {
     connectGoogle({ user: { id: userId, orgId: orgB } }, res);
     const state = new URL(res.body.url).searchParams.get("state")!;
     const claims = jwt.verify(state, process.env.JWT_SECRET!) as any;
-    assert.equal(claims.userId, userId);
-    assert.equal(claims.orgId, orgB);
+    assert.equal(claims.uid, userId);
+    assert.equal(claims.oid, orgB);
     assert.equal(claims.purpose, "google-connect");
+    // must not look like a session token
+    assert.equal(claims.userId, undefined);
   });
 
   await t.test("the Google callback rejects forged, expired and wrong-purpose state", async () => {
     for (const state of [
       userId, // the old format: a bare user id
-      jwt.sign({ purpose: "google-connect", userId, orgId: orgA }, "wrong-secret"),
-      jwt.sign({ purpose: "google-connect", userId, orgId: orgA }, process.env.JWT_SECRET!, { expiresIn: -10 }),
-      jwt.sign({ purpose: "login", userId, orgId: orgA }, process.env.JWT_SECRET!),
+      jwt.sign({ purpose: "google-connect", uid: userId, oid: orgA }, "wrong-secret"),
+      jwt.sign({ purpose: "google-connect", uid: userId, oid: orgA }, process.env.JWT_SECRET!, { expiresIn: -10 }),
+      jwt.sign({ purpose: "login", uid: userId, oid: orgA }, process.env.JWT_SECRET!),
     ]) {
       const res = respond();
       await googleCallback({ query: { code: "code", state } }, res);
@@ -266,9 +270,84 @@ test("switch endpoint and the Google connect state", async (t) => {
   });
 
   await t.test("only an admin of that org can finish connecting Google", async () => {
-    const state = jwt.sign({ purpose: "google-connect", userId, orgId: orgB }, process.env.JWT_SECRET!);
+    const state = jwt.sign({ purpose: "google-connect", uid: userId, oid: orgB }, process.env.JWT_SECRET!);
     const res = respond();
     await googleCallback({ query: { code: "code", state } }, res);
     assert.equal(res.statusCode, 403); // MEMBER in org B
   });
+
+  await t.test("a Google connect state token is not accepted as a login", async () => {
+    const res = respond();
+    connectGoogle({ user: { id: userId, orgId: orgA } }, res);
+    const state = new URL(res.body.url).searchParams.get("state")!;
+    const response = await fetch(`${base}/switch`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${state}` },
+      body: JSON.stringify({ orgId: orgB }),
+    });
+    assert.equal(response.status, 401);
+
+    // even a token that has a userId claim is refused when it carries a purpose
+    const sneaky = jwt.sign({ userId, purpose: "google-connect" }, process.env.JWT_SECRET!);
+    const sneakyResponse = await fetch(`${base}/switch`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${sneaky}` },
+      body: JSON.stringify({ orgId: orgB }),
+    });
+    assert.equal(sneakyResponse.status, 401);
+  });
+});
+
+test("a legacy user with an open org but no membership is repaired", async (t) => {
+  const secretBefore = process.env.JWT_SECRET;
+  process.env.JWT_SECRET = "multi-org-heal-secret";
+  t.after(() => {
+    if (secretBefore === undefined) delete process.env.JWT_SECRET;
+    else process.env.JWT_SECRET = secretBefore;
+  });
+
+  const rows: any[] = [];
+  const upserts: any[] = [];
+  const stub = (target: any, key: string, fn: any) => {
+    const original = target[key];
+    target[key] = fn;
+    t.after(() => { target[key] = original; });
+  };
+  // As written by the previous version of the app: orgId + role on the user, no membership.
+  stub(prisma.user, "findUnique", async () =>
+    ({ id: userId, orgId: orgA, role: "ADMIN", memberships: [...rows] }));
+  stub(prisma.organization, "findUnique", async () => ({ id: orgA }));
+  stub(prisma.membership, "upsert", async (args: any) => {
+    upserts.push(args);
+    rows.push({ orgId: args.create.orgId, role: args.create.role });
+    return args.create;
+  });
+  t.after(async () => { await prisma.$disconnect(); });
+
+  const { protect } = await import("../src/middleware.js");
+  const req: any = {
+    method: "GET",
+    headers: { authorization: `Bearer ${jwt.sign({ userId }, process.env.JWT_SECRET!)}` },
+  };
+  let status = 200;
+  const res: any = { status: (code: number) => { status = code; return res; }, json: () => res };
+  let nextCalled = false;
+
+  await protect(req, res, () => { nextCalled = true; });
+
+  assert.equal(nextCalled, true);
+  assert.equal(status, 200);
+  assert.equal(upserts.length, 1);
+  assert.deepEqual(upserts[0].create, { userId, orgId: orgA, role: "ADMIN" });
+  // the request sees the org and the role the user had
+  assert.equal(req.user.orgId, orgA);
+  assert.equal(req.user.role, "ADMIN");
+
+  // a user with no org is left alone
+  rows.length = 0; upserts.length = 0;
+  stub(prisma.user, "findUnique", async () => ({ id: userId, orgId: null, role: "MEMBER", memberships: [] }));
+  const req2: any = { ...req, user: undefined };
+  await protect(req2, res, () => {});
+  assert.equal(upserts.length, 0);
+  assert.equal(req2.user.orgId, null);
 });

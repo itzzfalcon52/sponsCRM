@@ -55,10 +55,12 @@ export const createOrganization = async (
         data: { userId, orgId: org.id, role: "ADMIN" },
       });
 
-      // 3. Open the new organization
+      // 3. Open the new organization. User.role is no longer read by this
+      // version; it is kept in step only so rolling back the app does not
+      // lose roles. Remove with the cleanup migration.
       const user = await tx.user.update({
         where: { id: userId },
-        data: { orgId: org.id },
+        data: { orgId: org.id, role: "ADMIN" },
       });
 
       return { org, user };
@@ -76,16 +78,16 @@ export const joinOrganization = async (userId: string, inviteCode: string) => {
         }
 
         // 2. Join as MEMBER. Joining an org you already belong to keeps your role.
-        await tx.membership.upsert({
+        const membership = await tx.membership.upsert({
             where: { userId_orgId: { userId, orgId: org.id } },
             create: { userId, orgId: org.id, role: "MEMBER" },
             update: {},
         });
 
-        // 3. Open it
+        // 3. Open it (User.role mirrors the active role, see createOrganization)
         const user = await tx.user.update({
             where: { id: userId },
-            data: { orgId: org.id },
+            data: { orgId: org.id, role: membership.role },
         });
 
         return { org, user };
@@ -102,14 +104,15 @@ export class NotAMemberError extends Error {
 export const switchOrganization = async (userId: string, orgId: string) => {
   const membership = await prisma.membership.findUnique({
     where: { userId_orgId: { userId, orgId } },
-    select: { orgId: true },
+    select: { orgId: true, role: true },
   });
 
   if (!membership) throw new NotAMemberError();
 
+  // User.role mirrors the active role, see createOrganization
   return prisma.user.update({
     where: { id: userId },
-    data: { orgId },
+    data: { orgId, role: membership.role },
   });
 };
 
@@ -176,10 +179,18 @@ export const updateMemberRole = async (memberId: string, orgId: string, newRole:
       }
     }
 
-    return tx.membership.update({
+    const updated = await tx.membership.update({
       where: { id: membership.id },
       data: { role: newRole },
     });
+
+    // Keep the legacy column in step if this is the org they have open
+    await tx.user.updateMany({
+      where: { id: memberId, orgId },
+      data: { role: newRole },
+    });
+
+    return updated;
   });
 };
 

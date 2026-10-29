@@ -4,7 +4,7 @@ import type { Response } from "express";
 import type { User } from "../generated/prisma/client.js";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
-import { resolveActiveMembership } from "./models/sessionModule.js";
+import { healLegacyMembership, resolveActiveMembership } from "./models/sessionModule.js";
 
 
 export const protect = async (req: any, res: Response, next: any) => {
@@ -39,7 +39,18 @@ export const protect = async (req: any, res: Response, next: any) => {
         userId: string;
         role: string;
         orgId: string | null;
+        purpose?: string;
       };
+
+      // Session tokens carry no purpose. Short-lived tokens made for other
+      // flows (like the Google connect state, which appears in URLs) must
+      // never be accepted as a login.
+      if (decoded.purpose) {
+        return res.status(401).json({
+          status: "Unauthorized",
+          message: "Invalid token",
+        });
+      }
 
       
 
@@ -48,17 +59,25 @@ export const protect = async (req: any, res: Response, next: any) => {
       // 2. Verify user still exists, and load the organization they have open.
       // Role and org come from the database on every request, so removing a
       // member or switching org takes effect immediately.
-      const row = await prisma.user.findUnique({
-        where: { id: decoded.userId },
-        select: {
-          id: true,
-          orgId: true,
-          memberships: {
-            select: { orgId: true, role: true },
-            orderBy: { createdAt: "asc" },
+      const loadRow = () =>
+        prisma.user.findUnique({
+          where: { id: decoded.userId },
+          select: {
+            id: true,
+            orgId: true,
+            role: true, // only read to repair legacy rows, see healLegacyMembership
+            memberships: {
+              select: { orgId: true, role: true },
+              orderBy: { createdAt: "asc" },
+            },
           },
-        },
-      });
+        });
+
+      let row = await loadRow();
+
+      if (row && (await healLegacyMembership(row))) {
+        row = await loadRow();
+      }
 
       const active = row
         ? resolveActiveMembership(row.orgId, row.memberships)

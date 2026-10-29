@@ -4,15 +4,27 @@ import { useAuthStore, type User } from "../stores/authstore";
 import { toast } from "sonner";
 
 // Everything cached on screen belongs to the organization that was open, so
-// it is dropped whenever the open organization changes. Only the session
-// query stays.
+// it is reset whenever the open organization changes. Unlike removeQueries,
+// resetQueries also refetches queries a mounted page is still using, so a page
+// that stays open never keeps showing the old organization's data. Only the
+// session query is kept.
 export const clearOrgScopedCache = (queryClient: QueryClient) =>
-  queryClient.removeQueries({ predicate: (q) => q.queryKey[0] !== "authUser" });
+  queryClient.resetQueries({ predicate: (q) => q.queryKey[0] !== "authUser" });
 
 export const useOrg = () => {
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore.getState().setUser;
+
+  // Applies a fresh session (create, join, switch, leave, delete) everywhere
+  // it is cached. The cached /me result is replaced too, otherwise useAuth
+  // would re-apply the old organization from it until the next refetch.
+  const applySession = async (res: { data: { user: User } }) => {
+    await queryClient.cancelQueries({ queryKey: ["authUser"] });
+    queryClient.setQueryData(["authUser"], res);
+    setUser(res.data.user);
+    clearOrgScopedCache(queryClient);
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["orgMembers"],
@@ -23,34 +35,19 @@ export const useOrg = () => {
   const createOrgMutation = useMutation({
     mutationFn: orgApi.createOrg,
     
-    onSuccess: async (res) => {
-      const updatedUser=res.data.user;
-      setUser(updatedUser); //we update the zustand user state with the organization details
-      clearOrgScopedCache(queryClient);
-      await queryClient.invalidateQueries({ queryKey: ["authUser"] });
-    },
+    onSuccess: applySession, // the new organization is now the open one
   });
 
   const joinOrgMutation = useMutation({
     mutationFn: orgApi.joinOrg,
-    onSuccess: async (res) => {
-      
-      // Use the response 'res' from the backend, not the 'data' from useQuery
-        const updatedUser = res.data.user;
-        setUser(updatedUser);
-      clearOrgScopedCache(queryClient);
-      await queryClient.invalidateQueries({ queryKey: ["authUser"] });
-    },
+    // Use the response from the backend, not the 'data' from useQuery
+    onSuccess: applySession,
   });
 
   // SWITCH ORG
   const switchOrgMutation = useMutation({
     mutationFn: orgApi.switchOrg,
-    onSuccess: async (res) => {
-      setUser(res.data.user);
-      clearOrgScopedCache(queryClient);
-      await queryClient.invalidateQueries({ queryKey: ["authUser"] });
-    },
+    onSuccess: applySession,
     onError: (err: { response?: { data?: { message?: string } } }) => {
       toast.error(err.response?.data?.message || "Failed to switch organization");
     },
@@ -76,13 +73,19 @@ export const useOrg = () => {
     onSuccess: (res) => {
       // Update local Zustand state with the new org name
       if (user) {
+        const name = res.data.organization.name;
         setUser({
           ...user,
           organization: {
             ...user.organization!,
-            name: res.data.organization.name,
+            name,
           },
+          // the switcher lists organizations from here too
+          organizations: user.organizations?.map((org) =>
+            org.id === user.organization?.id ? { ...org, name } : org
+          ),
         });
+        queryClient.invalidateQueries({ queryKey: ["authUser"] });
       }
       queryClient.invalidateQueries({ queryKey: ["orgMembers"] });
       toast.success("Workspace updated");
@@ -92,10 +95,11 @@ export const useOrg = () => {
   // After leaving or deleting an org the backend returns the session again:
   // the user is either now in another organization, or in none. With none,
   // OrgRequiredRoute sends them to the create/join screen.
-  const afterOrgRemoved = (res: { data: { user: User } }, message: string) => {
-    setUser(res.data.user);
-    clearOrgScopedCache(queryClient);
-    queryClient.invalidateQueries({ queryKey: ["authUser"] });
+  // After leaving or deleting an org the backend returns the session again:
+  // the user is either now in another organization, or in none. With none,
+  // OrgRequiredRoute sends them to the create/join screen.
+  const afterOrgRemoved = async (res: { data: { user: User } }, message: string) => {
+    await applySession(res);
     toast.success(message);
   };
 

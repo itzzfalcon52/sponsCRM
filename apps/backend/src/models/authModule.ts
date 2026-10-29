@@ -2,7 +2,7 @@ import {prisma} from '../lib/prisma.js';
 import bcrypt from 'bcrypt';
 import { Prisma } from '../../generated/prisma/client.js';
 import z from 'zod';
-import { sessionInclude, withActiveOrg } from './sessionModule.js';
+import { healedSessionUser, sessionInclude, withActiveOrg } from './sessionModule.js';
 
 
 export const registerSchema=z.object({
@@ -48,7 +48,7 @@ export const loginUser = async (input:LoginInput) => {
         where: { email },
         include: sessionInclude,
     });
-    const user = found ? withActiveOrg(found) : null;
+    const user = found ? withActiveOrg(await healedSessionUser(found)) : null;
     if (!user || !user.password) {
         throw new Error("Invalid email or password");
     }

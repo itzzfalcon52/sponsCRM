@@ -69,3 +69,48 @@ export const loadSessionUser = async (userId: string) => {
   });
   return user ? withActiveOrg(user) : null;
 };
+
+/**
+ * Before the Membership table existed, a user's organization and role lived
+ * on the user row. During a rollout the previous version of the app can still
+ * be writing that way (for example a user who joins an org while the old
+ * server is draining), which leaves a user with an open org but no
+ * membership. This creates the missing membership from those columns.
+ * Returns true if one was created.
+ */
+export const healLegacyMembership = async (user: {
+  id: string;
+  orgId: string | null;
+  role: Role;
+  memberships: unknown[];
+}) => {
+  if (user.memberships.length > 0 || !user.orgId) return false;
+
+  const org = await prisma.organization.findUnique({
+    where: { id: user.orgId },
+    select: { id: true },
+  });
+  if (!org) return false;
+
+  await prisma.membership.upsert({
+    where: { userId_orgId: { userId: user.id, orgId: user.orgId } },
+    create: { userId: user.id, orgId: user.orgId, role: user.role },
+    update: {},
+  });
+  return true;
+};
+
+/** A session user, reloaded if a legacy membership had to be created for it. */
+export const healedSessionUser = async <
+  U extends { id: string; orgId: string | null; role: Role; memberships: unknown[] }
+>(
+  user: U
+): Promise<U> => {
+  if (!(await healLegacyMembership(user))) return user;
+
+  const reloaded = await prisma.user.findUnique({
+    where: { id: user.id },
+    include: sessionInclude,
+  });
+  return (reloaded as unknown as U) ?? user;
+};

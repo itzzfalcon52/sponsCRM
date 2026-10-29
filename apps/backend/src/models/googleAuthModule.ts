@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import z from "zod";
 import { prisma } from "../lib/prisma.js";
 import { GoogleSignInError } from "../utils/googleSignIn.js";
-import { sessionInclude, withActiveOrg } from "./sessionModule.js";
+import { healedSessionUser, sessionInclude, withActiveOrg } from "./sessionModule.js";
 
 export const googleLoginSchema = z.object({
   credential: z.string().min(1).max(8192),
@@ -16,7 +16,7 @@ export async function findOrCreateGoogleUser(identity: GoogleIdentity, currentPa
   const linked = await prisma.user.findUnique({
     where: { googleId: identity.googleId }, include: sessionInclude,
   });
-  if (linked) return withActiveOrg(linked);
+  if (linked) return withActiveOrg(await healedSessionUser(linked));
 
   const matches = await prisma.user.findMany({
     where: { email: { equals: identity.email, mode: "insensitive" } },
@@ -51,7 +51,7 @@ export async function findOrCreateGoogleUser(identity: GoogleIdentity, currentPa
     }
     const user = await prisma.user.findUnique({ where: { id: existing.id }, include: sessionInclude });
     if (!user) throw new GoogleSignInError("Account no longer exists.");
-    return withActiveOrg(user);
+    return withActiveOrg(await healedSessionUser(user));
   }
 
   // Only brand-new users get a new ID. Existing account data is never recreated.
