@@ -45,6 +45,12 @@ export const orgApi={
         return res.data;
     },
 
+    // 9. Open another organization this account belongs to
+    switchOrg: async (orgId: string) => {
+        const res = await api.post("/org/switch", { orgId });
+        return res.data;
+    },
+
     // 8. Delete Organization (Admin Only)
     deleteOrg: async () => {
         const res = await api.delete("/org/delete");

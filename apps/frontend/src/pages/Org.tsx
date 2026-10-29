@@ -14,12 +14,16 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 
 export default function Org() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  // ?mode=add: the user already has an organization and chose to join or
+  // create another one, so don't send them straight back to the dashboard.
+  const [searchParams] = useSearchParams();
+  const addingAnother = searchParams.get("mode") === "add";
   const { 
    
     createOrg, 
@@ -33,10 +37,10 @@ export default function Org() {
   const hasOrg = !!user?.organization;
 
   useEffect(() => {
-    if (hasOrg) {
+    if (hasOrg && !addingAnother) {
       navigate("/dashboard", { replace: true} ); //we add replace so that when user hits back,he is back on the org page and infinite loop!!
     }
-  }, [hasOrg, navigate]);
+  }, [hasOrg, addingAnother, navigate]);
 
   const handleCreateOrg = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,11 +85,21 @@ export default function Org() {
           <Building2 className="h-8 w-8" />
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-          Welcome to the Workspace
+          {addingAnother ? "Add another organization" : "Welcome to the Workspace"}
         </h1>
         <p className="text-slate-500 max-w-md mx-auto">
-          To get started, you need to be part of an organization. Create a new one for your team, or join an existing one.
+          {addingAnother
+            ? "Your account stays the same. Create a new organization or join one with an invite code, then switch between them any time from the sidebar."
+            : "To get started, you need to be part of an organization. Create a new one for your team, or join an existing one."}
         </p>
+        {addingAnother && hasOrg && (
+          <Link
+            to="/dashboard"
+            className="inline-block text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
+          >
+            Back to {user?.organization?.name}
+          </Link>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8 w-full max-w-4xl">

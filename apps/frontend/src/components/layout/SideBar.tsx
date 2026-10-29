@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../stores/authstore";
+import OrgSwitcher from "./OrgSwitcher";
 import {
   LayoutDashboard,
   Building2,
@@ -93,28 +94,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       {user?.organization && (
         <div className="px-4 py-4">
-          <div className="flex items-center gap-3 rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-3 transition-colors">
-
-            {/* Organization Initial */}
-
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-indigo-100 font-bold text-indigo-700 shadow-sm dark:bg-indigo-950/60 dark:text-indigo-400">
-              {user.organization.name
-                .charAt(0)
-                .toUpperCase()}
-            </div>
-
-            {/* Organization Info */}
-
-            <div className="flex min-w-0 flex-col overflow-hidden">
-              <span className="truncate text-sm font-semibold text-sidebar-foreground">
-                {user.organization.name}
-              </span>
-
-              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                {user.role}
-              </span>
-            </div>
-          </div>
+          <OrgSwitcher onNavigate={onNavigate} />
         </div>
       )}
 

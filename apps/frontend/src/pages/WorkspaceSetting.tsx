@@ -16,9 +16,15 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export default function WorkspaceSettings() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
+
+  // After leaving or deleting, the user is in another organization (or in
+  // none, and the route guard then sends them to create/join one).
+  const goToDashboard = { onSuccess: () => navigate("/dashboard", { replace: true }) };
 
   const {
     orgMembers,
@@ -88,7 +94,7 @@ export default function WorkspaceSettings() {
 
     if (!confirmed) return;
 
-    leaveOrg();
+    leaveOrg(undefined, goToDashboard);
   };
 
   // ============================================================
@@ -120,7 +126,7 @@ export default function WorkspaceSettings() {
 
     if (!confirmed) return;
 
-    deleteOrg();
+    deleteOrg(undefined, goToDashboard);
   };
 
   // ============================================================

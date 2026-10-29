@@ -1,7 +1,13 @@
-import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation, type QueryClient } from "@tanstack/react-query";
 import { orgApi } from "../api/orgApi";
-import { useAuthStore } from "../stores/authstore";
+import { useAuthStore, type User } from "../stores/authstore";
 import { toast } from "sonner";
+
+// Everything cached on screen belongs to the organization that was open, so
+// it is dropped whenever the open organization changes. Only the session
+// query stays.
+export const clearOrgScopedCache = (queryClient: QueryClient) =>
+  queryClient.removeQueries({ predicate: (q) => q.queryKey[0] !== "authUser" });
 
 export const useOrg = () => {
   const queryClient = useQueryClient();
@@ -20,8 +26,8 @@ export const useOrg = () => {
     onSuccess: async (res) => {
       const updatedUser=res.data.user;
       setUser(updatedUser); //we update the zustand user state with the organization details
+      clearOrgScopedCache(queryClient);
       await queryClient.invalidateQueries({ queryKey: ["authUser"] });
-      await queryClient.invalidateQueries({ queryKey: ["orgMembers"] });
     },
   });
 
@@ -32,8 +38,21 @@ export const useOrg = () => {
       // Use the response 'res' from the backend, not the 'data' from useQuery
         const updatedUser = res.data.user;
         setUser(updatedUser);
+      clearOrgScopedCache(queryClient);
       await queryClient.invalidateQueries({ queryKey: ["authUser"] });
-      await queryClient.invalidateQueries({ queryKey: ["orgMembers"] });
+    },
+  });
+
+  // SWITCH ORG
+  const switchOrgMutation = useMutation({
+    mutationFn: orgApi.switchOrg,
+    onSuccess: async (res) => {
+      setUser(res.data.user);
+      clearOrgScopedCache(queryClient);
+      await queryClient.invalidateQueries({ queryKey: ["authUser"] });
+    },
+    onError: (err: { response?: { data?: { message?: string } } }) => {
+      toast.error(err.response?.data?.message || "Failed to switch organization");
     },
   });
 
@@ -70,15 +89,20 @@ export const useOrg = () => {
     },
   });
 
+  // After leaving or deleting an org the backend returns the session again:
+  // the user is either now in another organization, or in none. With none,
+  // OrgRequiredRoute sends them to the create/join screen.
+  const afterOrgRemoved = (res: { data: { user: User } }, message: string) => {
+    setUser(res.data.user);
+    clearOrgScopedCache(queryClient);
+    queryClient.invalidateQueries({ queryKey: ["authUser"] });
+    toast.success(message);
+  };
+
   // LEAVE ORG
   const leaveOrgMutation = useMutation({
     mutationFn: orgApi.leaveOrg,
-    onSuccess: () => {
-      // Crucial: Clear the user/org state locally
-      setUser(null); 
-      queryClient.clear(); // Wipe cache to prevent data leakage
-      toast.success("Left organization");
-    },
+    onSuccess: (res) => afterOrgRemoved(res, "Left organization"),
     onError: (err: any) => {
         toast.error(err.response?.data?.message || "Failed to leave organization");
     }
@@ -87,11 +111,7 @@ export const useOrg = () => {
   // DELETE ORG
   const deleteOrgMutation = useMutation({
     mutationFn: orgApi.deleteOrg,
-    onSuccess: () => {
-      setUser(null);
-      queryClient.clear();
-      toast.success("Organization permanently deleted");
-    },
+    onSuccess: (res) => afterOrgRemoved(res, "Organization permanently deleted"),
     onError: (err: any) => {
         toast.error(err.response?.data?.message || "Failed to delete organization");
     }
@@ -103,6 +123,8 @@ export const useOrg = () => {
 
     createOrg: createOrgMutation.mutate,
     joinOrg: joinOrgMutation.mutate,
+    switchOrg: switchOrgMutation.mutate,
+    isSwitchingOrg: switchOrgMutation.isPending,
     removeOrgMember: removeOrgMemberMutation.mutate,
     updateMemberRole: updateRoleMutation.mutate,
 

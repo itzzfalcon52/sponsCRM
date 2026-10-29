@@ -63,6 +63,12 @@ export type User = {
   role: "ADMIN" | "MEMBER" | "SENIOR";
 
   /**
+   * Every organization this account belongs to, with the user's role in each.
+   * `organization` and `role` above describe the one that is currently open.
+   */
+  organizations?: { id: string; name: string; role: "ADMIN" | "MEMBER" | "SENIOR" }[];
+
+  /**
    * Basic org info for UI display and routing decisions.
    * Example UI usage:
    * - show org name in header
