@@ -116,7 +116,16 @@ test("company creators and filters", async (t) => {
   await t.test("individual additions store the authenticated creator", async () => {
     await createCompany(creatorId, orgId, { name: "Acme", contactName: "Contact", domain: "EDTECH", status: "NOT_CONTACTED" });
     assert.equal(createQuery.data.createdById, creatorId);
+    assert.equal(createQuery.data.assignedToId, creatorId);
     assert.equal(createQuery.data.orgId, orgId);
+  });
+
+  await t.test("a client-supplied assignee is ignored on create", async () => {
+    await createCompany(creatorId, orgId, {
+      name: "Sneaky", contactName: "Contact", domain: "EDTECH", status: "NOT_CONTACTED",
+      assignedToId: memberId,
+    } as any);
+    assert.equal(createQuery.data.assignedToId, creatorId);
   });
 
   await t.test("bulk imports store the authenticated creator", async () => {
@@ -124,6 +133,7 @@ test("company creators and filters", async (t) => {
       domain: "EDTECH", companies: [{ name: "Imported Acme", contactName: "Contact" }],
     });
     assert.equal(createManyQuery.data[0].createdById, creatorId);
+    assert.equal(createManyQuery.data[0].assignedToId, creatorId);
     assert.equal(createManyQuery.data[0].orgId, orgId);
   });
 

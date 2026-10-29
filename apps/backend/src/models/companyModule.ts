@@ -149,6 +149,7 @@ export const bulkImportCompanies = async (
           domain: data.domain,
           status: "NOT_CONTACTED" as const,
           createdById: userId,
+          assignedToId: userId,
           orgId,
         })),
         skipDuplicates: true,
@@ -237,6 +238,10 @@ export const createCompany = async (
     data: {
       ...data,
       createdById: userId,
+      // The person who adds a company starts out responsible for it. Set here
+      // (not via the schema) so clients can't pick an assignee, and without
+      // assignCompany so the creator isn't notified about their own action.
+      assignedToId: userId,
       orgId,
     },
   });

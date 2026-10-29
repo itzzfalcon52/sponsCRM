@@ -64,6 +64,7 @@ test("bulk import skips duplicates and tolerates blank POC", async (t) => {
   ]);
   assert.equal(findQuery.where.orgId, orgId);
   assert.equal(createManyQuery.skipDuplicates, true);
+  assert.ok(createManyQuery.data.every((c: any) => c.assignedToId === userId));
   assert.deepEqual(
     createManyQuery.data.map((c: any) => [c.name, c.contactName, c.domain]),
     [
