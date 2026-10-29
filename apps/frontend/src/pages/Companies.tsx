@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useCompanies } from "../hooks/useCompany";
@@ -43,8 +44,29 @@ export default function Companies() {
   const [pasteImportOpen, setPasteImportOpen] =
     useState(false);
 
+  // After connecting Google the person comes back here with ?googleImport=...
+  // and lands straight back in the sheet import, on the link tab.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const googleImportResult = searchParams.get("googleImport");
+
   const [sheetImportOpen, setSheetImportOpen] =
-    useState(false);
+    useState(googleImportResult === "connected");
+
+  const [sheetImportSource, setSheetImportSource] =
+    useState<"file" | "link">(googleImportResult === "connected" ? "link" : "file");
+
+  useEffect(() => {
+    if (!googleImportResult) return;
+
+    if (googleImportResult === "connected") {
+      toast.success("Google connected. You can now import from sheet links.");
+    } else if (googleImportResult === "failed") {
+      toast.error("Google wasn't connected. Please try again.");
+    }
+
+    // Done with it: remove it so a refresh doesn't repeat the message.
+    setSearchParams({}, { replace: true });
+  }, [googleImportResult, setSearchParams]);
 
   // ============================================================
   // AUTH
@@ -294,9 +316,10 @@ export default function Companies() {
           onImport={() =>
             setPasteImportOpen(true)
           }
-          onImportSheet={() =>
-            setSheetImportOpen(true)
-          }
+          onImportSheet={() => {
+            setSheetImportSource("file");
+            setSheetImportOpen(true);
+          }}
         />
 
         {/* ======================================================
@@ -347,6 +370,8 @@ export default function Companies() {
         />
 
         <ImportSpreadsheetModal
+          key={sheetImportSource}
+          defaultSource={sheetImportSource}
           open={sheetImportOpen}
           onClose={() =>
             setSheetImportOpen(false)

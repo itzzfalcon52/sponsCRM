@@ -2,6 +2,9 @@ import { google } from "googleapis";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 import { getOAuthClient } from "../utils/google.js";
+import { encryptSecret } from "../utils/secretBox.js";
+import { loadSessionUser } from "../models/sessionModule.js";
+import { sanitizeUser } from "./authController.js";
 import type { Prisma, Domain } from "../../generated/prisma/client.js";
 
 /* ============================================================
@@ -76,15 +79,105 @@ export const connectGoogle = (req: any, res: any) => {
 };
 
 /* ============================================================
+   1b. CONNECT YOUR OWN GOOGLE ACCOUNT (for importing sheet links)
+   Open to every role. Read-only, stored per person, and separate from
+   the organization's connection that admins set up for Sync.
+============================================================ */
+
+export const connectGoogleForImport = (req: any, res: any) => {
+  try {
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ error: "Failed to initiate Google OAuth" });
+    }
+
+    // Not `userId`: that is the claim session tokens use, and this token
+    // travels in URLs, so it must never be usable as a login.
+    const state = jwt.sign(
+      { purpose: "google-import-connect", uid: req.user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: "10m" }
+    );
+
+    const url = getOAuthClient().generateAuthUrl({
+      access_type: "offline",
+      prompt: "consent", // makes Google return a refresh token every time
+      scope: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+      state,
+    });
+
+    return res.json({ url });
+  } catch (err) {
+    console.error("Connect Google (import) Error:", err);
+
+    return res.status(500).json({
+      error: "Failed to initiate Google OAuth",
+    });
+  }
+};
+
+const finishImportConnect = async (userId: string, code: unknown, res: any) => {
+  const redirect = (result: "connected" | "failed") =>
+    res.redirect(`${frontendCompaniesUrl()}?googleImport=${result}`);
+
+  // Google sends no code when the person cancels or denies access.
+  if (!code || typeof code !== "string") return redirect("failed");
+
+  try {
+    const { tokens } = await getOAuthClient().getToken(code);
+
+    if (!tokens.refresh_token) return redirect("failed");
+
+    // Only the encrypted refresh token is kept. It is never logged.
+    const saved = await prisma.user.updateMany({
+      where: { id: userId },
+      data: {
+        googleSheetsToken: encryptSecret(tokens.refresh_token),
+        googleSheetsConnectedAt: new Date(),
+      },
+    });
+
+    return redirect(saved.count === 1 ? "connected" : "failed");
+  } catch (err: any) {
+    console.error("Google import connect failed:", err?.response?.data?.error ?? err?.name);
+    return redirect("failed");
+  }
+};
+
+export const disconnectGoogleForImport = async (req: any, res: any) => {
+  try {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { googleSheetsToken: null, googleSheetsConnectedAt: null },
+    });
+
+    const user = await loadSessionUser(req.user.id);
+
+    return res.status(200).json({
+      status: "success",
+      data: { user: user ? sanitizeUser(user) : null },
+    });
+  } catch (err) {
+    console.error("Disconnect Google (import) Error:", err);
+
+    return res.status(500).json({ error: "Failed to disconnect Google" });
+  }
+};
+
+/* ============================================================
    2. GOOGLE CALLBACK
    OAuth return URL
 ============================================================ */
+
+// Where Google sends people after they connect. FRONTEND_URL lets local
+// development return to localhost instead of the live site.
+const frontendCompaniesUrl = () =>
+  `${(process.env.FRONTEND_URL || "https://www.sponscrm.tech").replace(/\/$/, "")}/companies`;
 
 export const googleCallback = async (req: any, res: any) => {
   try {
     const { code, state } = req.query;
 
-    if (!code || !state || typeof state !== "string") {
+    if (!state || typeof state !== "string") {
       return res.status(400).send("Missing OAuth code or state");
     }
 
@@ -98,6 +191,20 @@ export const googleCallback = async (req: any, res: any) => {
       connect = jwt.verify(state, process.env.JWT_SECRET as string) as typeof connect;
     } catch {
       return res.status(400).send("Invalid or expired OAuth state");
+    }
+
+    /* --------------------------------------------------------
+       A person connecting their own Google account to import
+       from sheet links. Separate from the organization's
+       connection below, and open to every role.
+    -------------------------------------------------------- */
+
+    if (connect.purpose === "google-import-connect" && connect.uid) {
+      return await finishImportConnect(connect.uid, code, res);
+    }
+
+    if (!code || typeof code !== "string") {
+      return res.status(400).send("Missing OAuth code or state");
     }
 
     if (connect.purpose !== "google-connect" || !connect.uid || !connect.oid) {
@@ -172,9 +279,7 @@ export const googleCallback = async (req: any, res: any) => {
        Redirect back to frontend
     -------------------------------------------------------- */
 
-    return res.redirect(
-      "https://www.sponscrm.tech/companies"
-    );
+    return res.redirect(frontendCompaniesUrl());
   } catch (err) {
     console.error("Google Callback Error:", err);
 

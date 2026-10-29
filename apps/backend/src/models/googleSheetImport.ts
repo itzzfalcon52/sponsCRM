@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { getOrgSheetsClient, GoogleImportError } from "../utils/googleSheetsClient.js";
+import {
+  clearUserGoogleToken,
+  getSheetsClientFor,
+  GoogleImportError,
+  type SheetsSource,
+} from "../utils/googleSheetsClient.js";
 
 export const MAX_SHEET_ROWS = 2000;
 
@@ -31,14 +36,16 @@ export const parseSpreadsheetUrl = (raw: string) => {
   return { spreadsheetId: match[1], gid: gid && /^\d+$/.test(gid) ? Number(gid) : null };
 };
 
-const toGoogleImportError = (err: any) => {
+const toGoogleImportError = (err: any, source: SheetsSource | null) => {
   if (err instanceof GoogleImportError) return err;
 
   if (err?.response?.data?.error === "invalid_grant") {
     return new GoogleImportError(
       401,
       "GOOGLE_RECONNECT_REQUIRED",
-      "Your Google connection has expired. Please reconnect Google."
+      source === "user"
+        ? "Your Google connection expired. Connect your Google account again."
+        : "Your Google connection has expired. Please reconnect Google."
     );
   }
 
@@ -47,7 +54,7 @@ const toGoogleImportError = (err: any) => {
     return new GoogleImportError(
       403,
       "SHEET_NO_ACCESS",
-      "SponsCRM can't open this sheet. Share it with the Google account connected to SponsCRM, or upload it as a file."
+      "SponsCRM can't open this sheet. Share it with the Google account you connected, or upload it as a file."
     );
   }
 
@@ -55,6 +62,7 @@ const toGoogleImportError = (err: any) => {
 };
 
 export const readGoogleSheet = async (
+  userId: string,
   orgId: string,
   input: z.infer<typeof googleSheetPreviewSchema>
 ) => {
@@ -67,8 +75,12 @@ export const readGoogleSheet = async (
     );
   }
 
+  let source: SheetsSource | null = null;
+
   try {
-    const sheets = await getOrgSheetsClient(orgId);
+    const client = await getSheetsClientFor(userId, orgId);
+    const sheets = client.sheets;
+    source = client.source;
 
     const meta = await sheets.spreadsheets.get({
       spreadsheetId: parsed.spreadsheetId,
@@ -109,7 +121,13 @@ export const readGoogleSheet = async (
       rows,
       truncated: (values.data.values?.length ?? 0) > MAX_SHEET_ROWS,
     };
-  } catch (err) {
-    throw toGoogleImportError(err);
+  } catch (err: any) {
+    // A token Google no longer accepts is useless: forget it so the person is
+    // asked to connect again instead of failing the same way every time.
+    if (source === "user" && err?.response?.data?.error === "invalid_grant") {
+      await clearUserGoogleToken(userId).catch(() => undefined);
+    }
+
+    throw toGoogleImportError(err, source);
   }
 };

@@ -1,4 +1,5 @@
 import { api } from "./axios";
+import type { User } from "../stores/authstore";
 
 export interface BulkImportCompany {
   name: string;
@@ -58,5 +59,19 @@ export const companyImportApi = {
     });
 
     return response.data.data;
+  },
+
+  /** Where to send the person to connect their own Google account (read-only). */
+  connectGoogleForImport: async (): Promise<string> => {
+    const response = await api.get("/google/connect-import");
+
+    return response.data.url;
+  },
+
+  /** Forgets this person's Google connection. Returns the updated session. */
+  disconnectGoogleForImport: async (): Promise<{ data: { user: User } }> => {
+    const response = await api.delete("/google/connect-import");
+
+    return response.data;
   },
 };

@@ -90,6 +90,11 @@ model User {
   activities Activity[]
   notifications Notification[]
   memberships Membership[]
+  // This person's own Google connection for importing from sheet links:
+  // an encrypted read-only refresh token. Separate from the organization's
+  // connection, which only admins set up and which is used for Sync.
+  googleSheetsToken String?
+  googleSheetsConnectedAt DateTime?
 
   
 } 

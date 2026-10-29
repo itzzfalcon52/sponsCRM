@@ -68,6 +68,9 @@ export type User = {
    */
   organizations?: { id: string; name: string; role: "ADMIN" | "MEMBER" | "SENIOR" }[];
 
+  /** This person connected their own Google account for importing from sheet links. */
+  googleImportConnected?: boolean;
+
   /**
    * Basic org info for UI display and routing decisions.
    * Example UI usage:

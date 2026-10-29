@@ -449,7 +449,7 @@ export const previewGoogleSheetController = async (
 ) => {
   try {
     const input = googleSheetPreviewSchema.parse(req.body);
-    const data = await readGoogleSheet(req.user.orgId, input);
+    const data = await readGoogleSheet(req.user.id, req.user.orgId, input);
 
     return res.status(200).json({ status: "success", data });
   } catch (error: any) {

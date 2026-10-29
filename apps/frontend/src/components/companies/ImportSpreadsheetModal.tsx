@@ -9,9 +9,11 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { companyImportApi } from "../../api/companyImportApi";
+import { useAuthStore } from "../../stores/authstore";
 import {
   IMPORT_FIELDS,
   buildImportRows,
@@ -32,6 +34,8 @@ interface ImportSpreadsheetModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  /** Which source tab to start on (for example after connecting Google). */
+  defaultSource?: "file" | "link";
 }
 
 type Step = "source" | "map" | "preview" | "done";
@@ -74,6 +78,11 @@ function ErrorAlert({ message }: { message: string | null }) {
   );
 }
 
+const GOOGLE_CONNECT_CODES = ["GOOGLE_NOT_CONNECTED", "GOOGLE_RECONNECT_REQUIRED"];
+
+const errorCode = (error: unknown) =>
+  (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
+
 const requestError = (error: unknown, fallback: string) => {
   const e = error as { response?: { data?: { message?: string } }; message?: string };
   return e?.response?.data?.message || e?.message || fallback;
@@ -87,9 +96,16 @@ export default function ImportSpreadsheetModal({
   open,
   onClose,
   onSuccess,
+  defaultSource = "file",
 }: ImportSpreadsheetModalProps) {
+  const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+
   const [step, setStep] = useState<Step>("source");
-  const [sourceKind, setSourceKind] = useState<SourceKind>("file");
+  const [sourceKind, setSourceKind] = useState<SourceKind>(defaultSource);
+  const [connectingGoogle, setConnectingGoogle] = useState(false);
+  // The server said this person has no usable Google connection
+  const [needsGoogle, setNeedsGoogle] = useState(false);
 
   const [sheetUrl, setSheetUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -179,6 +195,7 @@ export default function ImportSpreadsheetModal({
         setStep("map");
       }
     } catch (error) {
+      setNeedsGoogle(GOOGLE_CONNECT_CODES.includes(errorCode(error) ?? ""));
       setSourceError(requestError(error, "Could not read that Google Sheet."));
     } finally {
       setLoading(false);
@@ -192,6 +209,28 @@ export default function ImportSpreadsheetModal({
     }
     const sheet = fileSheets.find((s) => s.name === tab);
     if (sheet) showRows(sheet.rows, tabs, tab);
+  };
+
+  const connectGoogle = async () => {
+    setConnectingGoogle(true);
+    try {
+      // Google takes over the page and sends the person back to Companies.
+      window.location.assign(await companyImportApi.connectGoogleForImport());
+    } catch (error) {
+      setSourceError(requestError(error, "Could not start the Google connection."));
+      setConnectingGoogle(false);
+    }
+  };
+
+  const disconnectGoogle = async () => {
+    try {
+      const response = await companyImportApi.disconnectGoogleForImport();
+      useAuthStore.getState().setUser(response.data.user);
+      queryClient.setQueryData(["authUser"], response);
+      toast.success("Google disconnected");
+    } catch (error) {
+      setSourceError(requestError(error, "Could not disconnect Google."));
+    }
   };
 
   const handleHeaderRowChange = (value: number) => {
@@ -270,6 +309,7 @@ export default function ImportSpreadsheetModal({
   const reset = () => {
     setStep("source");
     setSourceError(null);
+    setNeedsGoogle(false);
     setFileSheets([]);
     setTabs([]);
     setActiveTab("");
@@ -432,9 +472,49 @@ export default function ImportSpreadsheetModal({
                       className={selectClass}
                     />
                   </div>
+                  <div
+                    className={`rounded-xl border p-3 text-xs ${
+                      needsGoogle
+                        ? "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200"
+                        : "border-border bg-muted/30 text-muted-foreground"
+                    }`}
+                  >
+                    {user?.googleImportConnected ? (
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="flex items-center gap-1.5 font-medium text-foreground">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                          Your Google account is connected (read-only)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => void disconnectGoogle()}
+                          className="font-medium underline underline-offset-2 hover:text-foreground"
+                        >
+                          Disconnect
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <span className="min-w-0 flex-1">
+                          Connect your own Google account so SponsCRM can open your sheets. It only
+                          gets read-only access and only reads the sheets you paste here.
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={connectingGoogle}
+                          onClick={() => void connectGoogle()}
+                        >
+                          {connectingGoogle && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                          Connect Google
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    The sheet must be open to the Google account your organization connected to
-                    SponsCRM. Otherwise, download it as .xlsx and upload it.
+                    The sheet must be open to the Google account you connected. Otherwise, download
+                    it as .xlsx and upload it.
                   </p>
                   <Button type="submit" disabled={loading || !sheetUrl.trim()}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
