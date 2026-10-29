@@ -11,6 +11,7 @@ import {
   parseSpreadsheetUrl,
   SheetLinkError,
 } from "../src/models/googleSheetImport.js";
+import { connectGoogle } from "../src/controllers/exportCompaniesController.js";
 import companyRoutes from "../src/routes/companyRoutes.js";
 import exportRoutes from "../src/routes/exportRoute.js";
 
@@ -228,4 +229,20 @@ test("the endpoint: any role can import from a link, and the personal Google con
     assert.equal((await fetch(`${base}/google/connect`, { headers: headers() })).status, 403);
     assert.equal((await fetch(`${base}/google/sync`, { method: "POST", headers: headers() })).status, 403);
   });
+});
+
+test("Sync asks Google only for access to the spreadsheet SponsCRM creates", (t) => {
+  const before = { ...process.env };
+  process.env.JWT_SECRET = "sync-scope-test-secret";
+  process.env.GOOGLE_CLIENT_ID = "client-id";
+  process.env.GOOGLE_CLIENT_SECRET = "client-secret";
+  process.env.GOOGLE_REDIRECT_URI = "http://localhost:3000/api/v1/google/callback";
+  t.after(() => { process.env = before; });
+
+  const res: any = { json: (body: any) => { res.body = body; return res; }, status: () => res };
+  connectGoogle({ user: { id: userId, orgId } }, res);
+
+  const scope = new URL(res.body.url).searchParams.get("scope");
+  // drive.file is non-sensitive; the broad Sheets scopes would need Google's sensitive-scope review
+  assert.equal(scope, "https://www.googleapis.com/auth/drive.file");
 });

@@ -54,10 +54,10 @@ export const connectGoogle = (req: any, res: any) => {
       // Forces Google to return a refresh token during reconnect.
       prompt: "consent",
 
-      scope: [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive.file",
-      ],
+      // Only drive.file: access limited to the spreadsheet SponsCRM itself
+      // creates for the export. Sync never opens any other file, so the broad
+      // "all your spreadsheets" scope is not requested.
+      scope: ["https://www.googleapis.com/auth/drive.file"],
 
       // Identifies the user and organization after the OAuth callback.
       state,
