@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useAuthStore } from "../../stores/authstore";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../api/axios";
+import OrgSwitcher from "./OrgSwitcher";
 
 import {
-  Building2,
   Copy,
   CheckCircle2,
   LogOut,
@@ -119,66 +119,7 @@ export default function Topbar() {
           </Button>
         </DialogTrigger>
         {user?.organization?.name ? (
-          <div
-            className="
-              group flex min-w-0 items-center gap-2 sm:gap-3
-              rounded-2xl
-              border border-border
-              bg-card
-              px-2 py-1.5 sm:px-3
-              shadow-sm
-              transition-all
-              hover:border-indigo-300
-              hover:shadow-md
-              dark:hover:border-indigo-800
-            "
-          >
-            {/* Organization Icon */}
-
-            <div
-              className="
-                hidden h-8 w-8 shrink-0 sm:flex
-                items-center justify-center
-                rounded-xl
-                bg-indigo-600
-                shadow-lg shadow-indigo-500/20
-                transition-transform
-                group-hover:rotate-3
-              "
-            >
-              <Building2 className="h-4 w-4 text-white" />
-            </div>
-
-            {/* Organization Name */}
-
-            <div className="flex min-w-0 flex-col">
-              <span
-                className="
-                  hidden sm:block mb-1 text-[9px]
-                  font-black uppercase
-                  tracking-widest
-                  leading-none
-                  text-indigo-500
-                  dark:text-indigo-400
-                "
-              >
-                Workspace
-              </span>
-
-              <span
-                className="
-                  max-w-[110px] sm:max-w-[220px]
-                  truncate
-                  text-sm
-                  font-bold
-                  leading-none
-                  text-foreground
-                "
-              >
-                {user.organization.name}
-              </span>
-            </div>
-          </div>
+          <OrgSwitcher variant="topbar" />
         ) : (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />
