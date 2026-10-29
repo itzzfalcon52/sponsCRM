@@ -10,6 +10,7 @@ import MemberCompanyTable from "../components/companies/MemberCompanyTable";
 import CompanyFilters from "../components/companies/CompanyFilter";
 import AddCompanyModal from "../components/companies/AddCompanyModal";
 import PasteCompaniesModal from "../components/companies/PasteCompaniesModal";
+import ImportSpreadsheetModal from "../components/companies/ImportSpreadsheetModal";
 
 import { api } from "../api/axios";
 
@@ -40,6 +41,9 @@ export default function Companies() {
   const [open, setOpen] = useState(false);
 
   const [pasteImportOpen, setPasteImportOpen] =
+    useState(false);
+
+  const [sheetImportOpen, setSheetImportOpen] =
     useState(false);
 
   // ============================================================
@@ -250,6 +254,15 @@ export default function Companies() {
     );
   };
 
+  // The sheet import shows its own summary, so no toast here.
+  const handleSheetImportSuccess = () => {
+    queryClient.invalidateQueries({
+      queryKey: ["companies"],
+    });
+
+    setCurrentPage(1);
+  };
+
   // ============================================================
   // RENDER
   // ============================================================
@@ -280,6 +293,9 @@ export default function Companies() {
           lastSyncedAt={lastSync}
           onImport={() =>
             setPasteImportOpen(true)
+          }
+          onImportSheet={() =>
+            setSheetImportOpen(true)
           }
         />
 
@@ -327,6 +343,16 @@ export default function Companies() {
           }
           onSuccess={
             handleImportSuccess
+          }
+        />
+
+        <ImportSpreadsheetModal
+          open={sheetImportOpen}
+          onClose={() =>
+            setSheetImportOpen(false)
+          }
+          onSuccess={
+            handleSheetImportSuccess
           }
         />
 

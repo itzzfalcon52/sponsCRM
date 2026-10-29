@@ -48,102 +48,120 @@ const TypeSchema = z.enum(["CASH", "IN_KIND"]).optional();
    BULK IMPORT
    ============================================================ */
 
-   export const bulkImportCompanySchema = z.object({
-    domain: DomainSchema,
-  
-    companies: z
-      .array(
-        z.object({
-          name: z
-            .string()
-            .trim()
-            .min(1, "Company name is required")
-            .max(255),
-  
-          contactName: z
-            .string()
-            .trim()
-            .min(2, "POC name must contain at least 2 characters")
-            .max(100),
-  
-          linkedinUrl: z
-            .string()
-            .trim()
-            .optional()
-            .or(z.literal("")),
-  
-          phoneNumber: z
-            .string()
-            .trim()
-            .optional()
-            .or(z.literal("")),
-  
-          email: z
-            .string()
-            .trim()
-            .email("Invalid email address")
-            .optional()
-            .or(z.literal("")),
-        })
-      )
-      .min(1, "At least one company is required")
-      .max(500, "You can import at most 500 companies at once"),
+export const BULK_IMPORT_MAX_ROWS = 500;
+
+export const bulkImportCompanySchema = z.object({
+  domain: DomainSchema,
+
+  companies: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1, "Company name is required").max(255),
+
+        // POC is often missing in real sheets; the column is non-null so we store "".
+        contactName: z.string().trim().max(100).default(""),
+
+        linkedinUrl: z.string().trim().optional().or(z.literal("")),
+
+        phoneNumber: z.string().trim().optional().or(z.literal("")),
+
+        email: z
+          .string()
+          .trim()
+          .email("Invalid email address")
+          .optional()
+          .or(z.literal("")),
+
+        // Per-row sector (e.g. from a "Sector" column); falls back to the batch domain.
+        domain: DomainSchema.optional(),
+      })
+    )
+    .min(1, "At least one company is required")
+    .max(BULK_IMPORT_MAX_ROWS, `You can import at most ${BULK_IMPORT_MAX_ROWS} companies at once`),
+});
+
+export type BulkImportCompanyInput = z.infer<typeof bulkImportCompanySchema>;
+
+export type BulkImportSkipReason = "DUPLICATE_IN_SHEET" | "ALREADY_EXISTS";
+
+export type BulkImportSkippedRow = {
+  /** 1-based position within the submitted batch */
+  row: number;
+  name: string;
+  reason: BulkImportSkipReason;
+};
+
+const normalizeCompanyName = (name: string) =>
+  name.trim().replace(/\s+/g, " ").toLowerCase();
+
+/* ============================================================
+   BULK IMPORT FUNCTION
+   Valid rows are imported; duplicates are skipped and reported
+   instead of failing the whole batch.
+   ============================================================ */
+
+export const bulkImportCompanies = async (
+  userId: string,
+  orgId: string,
+  input: BulkImportCompanyInput
+) => {
+  const data = bulkImportCompanySchema.parse(input);
+
+  const skipped: BulkImportSkippedRow[] = [];
+  const seen = new Set<string>();
+  const candidates: { row: number; key: string; company: (typeof data.companies)[number] }[] = [];
+
+  data.companies.forEach((company, index) => {
+    const key = normalizeCompanyName(company.name);
+    if (seen.has(key)) {
+      skipped.push({ row: index + 1, name: company.name, reason: "DUPLICATE_IN_SHEET" });
+      return;
+    }
+    seen.add(key);
+    candidates.push({ row: index + 1, key, company });
   });
-  
-  export type BulkImportCompanyInput = z.infer<
-    typeof bulkImportCompanySchema
-  >;
-  
-  /* ============================================================
-     BULK IMPORT FUNCTION
-     ============================================================ */
-  
-  export const bulkImportCompanies = async (
-    userId: string,
-    orgId: string,
-    input: BulkImportCompanyInput
-  ) => {
-    const data = bulkImportCompanySchema.parse(input);
-  
-    const companies = data.companies.map((company) => ({
-      name: company.name,
-      contactName: company.contactName,
-  
-      linkedinUrl:
-        company.linkedinUrl?.trim() || null,
-  
-      phoneNumber:
-        company.phoneNumber?.trim() || null,
-  
-      email:
-        company.email?.trim() || null,
-  
-      domain: data.domain,
-  
-      status: "NOT_CONTACTED" as const,
-  
-      createdById: userId,
+
+  // One query for all names; names are matched case-insensitively.
+  const existing = await prisma.company.findMany({
+    where: {
       orgId,
-    }));
-  
-    /*
-     * Transaction ensures that either the entire import succeeds
-     * or nothing is inserted.
-     */
-    return prisma.$transaction(async (tx) => {
-      const createdCompanies = [];
-  
-      for (const company of companies) {
-        const created = await tx.company.create({
-          data: company,
-        });
-  
-        createdCompanies.push(created);
-      }
-  
-      return createdCompanies;
-    });
-  };
+      OR: candidates.map(({ company }) => ({
+        name: { equals: company.name.trim(), mode: "insensitive" as const },
+      })),
+    },
+    select: { name: true },
+  });
+  const existingKeys = new Set(existing.map((c) => normalizeCompanyName(c.name)));
+
+  const toCreate = candidates.filter(({ key, row, company }) => {
+    if (!existingKeys.has(key)) return true;
+    skipped.push({ row, name: company.name, reason: "ALREADY_EXISTS" });
+    return false;
+  });
+
+  // skipDuplicates covers a concurrent insert racing past the check above
+  // (@@unique([name, orgId])).
+  const result = toCreate.length
+    ? await prisma.company.createMany({
+        data: toCreate.map(({ company }) => ({
+          name: company.name.trim().replace(/\s+/g, " "),
+          contactName: company.contactName,
+          linkedinUrl: company.linkedinUrl?.trim() || null,
+          phoneNumber: company.phoneNumber?.trim() || null,
+          email: company.email?.trim() || null,
+          domain: company.domain ?? data.domain,
+          status: "NOT_CONTACTED" as const,
+          createdById: userId,
+          orgId,
+        })),
+        skipDuplicates: true,
+      })
+    : { count: 0 };
+
+  skipped.sort((a, b) => a.row - b.row);
+
+  return { createdCount: result.count, skipped };
+};
 
 /* ================================
    CREATE

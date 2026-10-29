@@ -1,0 +1,23 @@
+// These values MUST match the values of the Prisma Domain enum exactly.
+export const sectors = [
+  { value: "EDTECH", label: "EdTech" },
+  { value: "FINTECH", label: "FinTech" },
+  { value: "PREVIOUS_YEAR", label: "Previous Year" },
+  { value: "BRAND_ACTIVATION", label: "Brand Activation" },
+  { value: "MEDIA", label: "Media" },
+  { value: "STATIONERY", label: "Stationery" },
+  { value: "AI_TECH", label: "AI / Technology" },
+  { value: "STARTUP", label: "Startup" },
+  { value: "FITNESS", label: "Fitness" },
+  { value: "GAMING", label: "Gaming" },
+  { value: "FMCG", label: "FMCG" },
+  { value: "AUDIO_MOBILE", label: "Audio / Mobile" },
+  { value: "BANK", label: "Bank" },
+  { value: "AUTOMOBILE_TRAVEL", label: "Automobile / Travel" },
+  { value: "FASHION", label: "Fashion" },
+  { value: "SKINCARE", label: "Skincare" },
+  { value: "HEALTHCARE", label: "Healthcare" },
+  { value: "WORKSHOP", label: "Workshop" },
+  { value: "MISCELLANEOUS", label: "Miscellaneous" },
+  { value: "HACKATHON", label: "Hackathon/Competition" },
+];

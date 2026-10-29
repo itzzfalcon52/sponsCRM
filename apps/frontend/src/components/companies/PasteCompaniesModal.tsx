@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 
 import { companyImportApi } from "../../api/companyImportApi";
+import { sectors } from "../../lib/sectors";
 
 // ============================================================
 // TYPES
@@ -68,98 +69,6 @@ const companySchema = z.object({
       }
     ),
 });
-
-// ============================================================
-// SECTORS / DOMAINS
-// ============================================================
-//
-// IMPORTANT:
-// These values MUST match the values of your Prisma
-// Domain enum exactly.
-//
-// Change these if your actual Prisma enum uses different names.
-// ============================================================
-
-const sectors = [
-    {
-      value: "EDTECH",
-      label: "EdTech",
-    },
-    {
-      value: "FINTECH",
-      label: "FinTech",
-    },
-    {
-      value: "PREVIOUS_YEAR",
-      label: "Previous Year",
-    },
-    {
-      value: "BRAND_ACTIVATION",
-      label: "Brand Activation",
-    },
-    {
-      value: "MEDIA",
-      label: "Media",
-    },
-    {
-      value: "STATIONERY",
-      label: "Stationery",
-    },
-    {
-      value: "AI_TECH",
-      label: "AI / Technology",
-    },
-    {
-      value: "STARTUP",
-      label: "Startup",
-    },
-    {
-      value: "FITNESS",
-      label: "Fitness",
-    },
-    {
-      value: "GAMING",
-      label: "Gaming",
-    },
-    {
-      value: "FMCG",
-      label: "FMCG",
-    },
-    {
-      value: "AUDIO_MOBILE",
-      label: "Audio / Mobile",
-    },
-    {
-      value: "BANK",
-      label: "Bank",
-    },
-    {
-      value: "AUTOMOBILE_TRAVEL",
-      label: "Automobile / Travel",
-    },
-    {
-      value: "FASHION",
-      label: "Fashion",
-    },
-    {
-      value: "SKINCARE",
-      label: "Skincare",
-    },
-    {
-      value: "HEALTHCARE",
-      label: "Healthcare",
-    },
-    {
-      value: "WORKSHOP",
-      label: "Workshop",
-    },
-    {
-      value: "MISCELLANEOUS",
-      label: "Miscellaneous",
-    },
-    { value: "HACKATHON", label: "Hackathon/Competition" },
-
-  ];
 
 // ============================================================
 // HELPERS
@@ -387,15 +296,19 @@ export default function PasteCompaniesModal({
       // --------------------------------------------------------
 
       const importedCount =
-       response.data?.data?.count ??
-       validCompanies.length;
+        response.data?.createdCount ?? validCompanies.length;
+      const skippedCount = response.data?.skipped?.length ?? 0;
 
       toast.success(
         `${importedCount} compan${
           importedCount === 1
             ? "y"
             : "ies"
-        } imported successfully.`
+        } imported successfully.${
+          skippedCount
+            ? ` ${skippedCount} skipped as duplicates.`
+            : ""
+        }`
       );
 
       resetModal();

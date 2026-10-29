@@ -9,6 +9,7 @@ import {
   Link2,
   Loader2,
   ClipboardPaste,
+  Sheet,
   UserPlus,
 } from "lucide-react";
 import { useState } from "react";
@@ -33,6 +34,8 @@ interface CompanyFiltersProps {
   // NEW
   onImport: () => void;
 
+  onImportSheet: () => void;
+
   isConnected: boolean;
 
   lastSyncedAt?: string | Date | null;
@@ -44,6 +47,7 @@ export default function CompanyFilters({
   onExport,
   onConnect,
   onImport,
+  onImportSheet,
   isConnected,
   lastSyncedAt,
 }: CompanyFiltersProps) {
@@ -587,6 +591,28 @@ export default function CompanyFilters({
               Import Excel
             </Button>
           
+
+            <Button
+              variant="outline"
+              onClick={onImportSheet}
+              className="
+                flex-1
+                border-emerald-500/30
+                bg-emerald-500/5
+                font-semibold
+                text-emerald-600
+                shadow-sm
+                hover:border-emerald-500/50
+                hover:bg-emerald-500/10
+                hover:text-emerald-700
+                dark:text-emerald-400
+                dark:hover:text-emerald-300
+                sm:flex-none
+              "
+            >
+              <Sheet className="mr-2 h-4 w-4 shrink-0" />
+              Import Sheet
+            </Button>
 
           {/* ==================================================
               ADD COMPANY

@@ -11,6 +11,7 @@ import {
   bulkAssignController,
   searchDuplicatesController,
   bulkImportCompaniesController,
+  previewGoogleSheetController,
 } from "../controllers/companyController.js";
 
 import {
@@ -68,6 +69,8 @@ router.post(
   
   bulkImportCompaniesController
 );
+
+router.post("/import/google-sheet", previewGoogleSheetController);
 
 /* ================================
    SINGLE COMPANY

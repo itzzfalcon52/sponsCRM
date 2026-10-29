@@ -51,6 +51,11 @@ test("company creators and filters", async (t) => {
     createQuery = args;
     return { id: "company-id", ...args.data };
   });
+  let createManyQuery: any;
+  stub(prisma.company, "createMany", async (args: any) => {
+    createManyQuery = args;
+    return { count: args.data.length };
+  });
   stub(prisma, "$transaction", async (callback: any) => callback(prisma));
   t.after(async () => { await prisma.$disconnect(); });
 
@@ -118,8 +123,8 @@ test("company creators and filters", async (t) => {
     await bulkImportCompanies(creatorId, orgId, {
       domain: "EDTECH", companies: [{ name: "Imported Acme", contactName: "Contact" }],
     });
-    assert.equal(createQuery.data.createdById, creatorId);
-    assert.equal(createQuery.data.orgId, orgId);
+    assert.equal(createManyQuery.data[0].createdById, creatorId);
+    assert.equal(createManyQuery.data[0].orgId, orgId);
   });
 
   const secretBefore = process.env.JWT_SECRET;

@@ -1,4 +1,6 @@
 import type { Request, Response } from "express";
+import { googleSheetPreviewSchema, readGoogleSheet } from "../models/googleSheetImport.js";
+import { GoogleImportError } from "../utils/googleSheetsClient.js";
 import {
   createCompany,
   getCompanyById,
@@ -397,18 +399,18 @@ export const searchDuplicatesController = async (req: any, res: Response) => {
         });
       }
   
-      const companies = await bulkImportCompanies(
+      const { createdCount, skipped } = await bulkImportCompanies(
         userId,
         orgId,
         req.body
       );
-  
+
       return res.status(201).json({
         status: "success",
-        message: `${companies.length} companies imported successfully`,
+        message: `${createdCount} companies imported, ${skipped.length} skipped`,
         data: {
-          companies,
-          count: companies.length,
+          createdCount,
+          skipped,
         },
       });
     }  catch (error: any) {
@@ -441,3 +443,42 @@ export const searchDuplicatesController = async (req: any, res: Response) => {
   };
 }
 
+
+/* ============================================================
+   PREVIEW A GOOGLE SHEET FOR IMPORT
+   ============================================================ */
+
+export const previewGoogleSheetController = async (
+  req: any,
+  res: Response
+) => {
+  try {
+    const input = googleSheetPreviewSchema.parse(req.body);
+    const data = await readGoogleSheet(req.user.orgId, input);
+
+    return res.status(200).json({ status: "success", data });
+  } catch (error: any) {
+    if (error?.name === "ZodError") {
+      return res.status(400).json({
+        status: "fail",
+        error: "VALIDATION_ERROR",
+        message: error.issues?.[0]?.message || "Invalid request.",
+      });
+    }
+
+    if (error instanceof GoogleImportError) {
+      return res.status(error.status).json({
+        status: "fail",
+        error: error.code,
+        message: error.message,
+      });
+    }
+
+    console.error("PREVIEW GOOGLE SHEET ERROR:", error);
+    return res.status(500).json({
+      status: "error",
+      error: "SHEET_READ_FAILED",
+      message: "Could not read the Google Sheet.",
+    });
+  }
+};
